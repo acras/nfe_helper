@@ -9,9 +9,6 @@ import java.net.InetSocketAddress;
 
 import com.sun.net.httpserver.HttpServer;
 
-// Como usar uma instância de chave já existente com o Axis2:
-// http://markmail.org/message/zfseoekxmvijjmiq?q=axis2+sslcontext
-
 public class HelperServer
 {
   public static void main(String[] args)
@@ -35,7 +32,7 @@ public class HelperServer
       }
       else
         showUsage();
-      
+
       startServer(port);
     }
     catch(Exception e)
@@ -72,12 +69,8 @@ public class HelperServer
     server.createContext(
         "/invokews",
         new WebServiceInvokationHandler());
-    server.createContext(
-        "/exit",
-        new ExitHandler(server));
     
     server.setExecutor(null);
     server.start();
   }
 }
-

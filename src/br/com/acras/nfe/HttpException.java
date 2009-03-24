@@ -1,3 +1,5 @@
+package br.com.acras.nfe;
+
 abstract class HttpException extends Exception
 {
   public HttpException(String message)

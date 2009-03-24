@@ -1,3 +1,5 @@
+package br.com.acras.nfe;
+
 import java.io.IOException;
 
 import com.sun.net.httpserver.HttpExchange;

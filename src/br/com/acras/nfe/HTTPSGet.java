@@ -1,3 +1,5 @@
+package br.com.acras.nfe;
+
 import java.net.*;
 import java.io.*;
 import java.security.*;

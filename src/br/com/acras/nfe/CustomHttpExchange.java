@@ -1,3 +1,5 @@
+package br.com.acras.nfe;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;

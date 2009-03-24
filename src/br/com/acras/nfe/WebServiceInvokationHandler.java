@@ -1,3 +1,5 @@
+package br.com.acras.nfe;
+
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.IOException;

@@ -1,3 +1,5 @@
+package br.com.acras.nfe;
+
 class NotFoundException extends HttpException
 {
   public NotFoundException(String message)

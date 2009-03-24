@@ -1,3 +1,5 @@
+package br.com.acras.nfe;
+
 class MethodNotAllowedException extends HttpException
 {
   public MethodNotAllowedException(String message)

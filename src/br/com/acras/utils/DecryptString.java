@@ -1,3 +1,5 @@
+package br.com.acras.utils;
+
 public class DecryptString
 {
   public static void main(String[] args)
@@ -10,7 +12,7 @@ public class DecryptString
     
     try
     {
-      String str = AcrasEncryption.decryptString(args[0]);
+      String str = GenericEncryption.decryptString(args[0]);
       
       System.out.print(str);
       System.out.print(" (");
@@ -24,4 +26,3 @@ public class DecryptString
     }
   }
 }
-

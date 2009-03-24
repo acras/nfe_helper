@@ -1,3 +1,5 @@
+package br.com.acras.utils;
+
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -8,7 +10,7 @@ import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
-public class AcrasEncryption
+public class GenericEncryption
 {
   private static final byte[] initVector = new byte[] { -110, 4, -4, -52, -127,
       -91, 11, 67, -108, -80, -11, -97, 25, -65, 49, 6 };
@@ -41,12 +43,12 @@ public class AcrasEncryption
     return result;
   }
   
-  private static void throwInvalidStringError() throws AcrasEncryptionException
+  private static void throwInvalidStringError() throws GenericEncryptionException
   {
-    throw new AcrasEncryptionException("Invalid encrypted string");
+    throw new GenericEncryptionException("Invalid encrypted string");
   }
   
-  private static String decryptRawString(String str) throws AcrasEncryptionException
+  private static String decryptRawString(String str) throws GenericEncryptionException
   {
     byte[] rawInput = packStringOfHexes(str);
     byte[] input = new byte[rawInput.length - 1];
@@ -68,7 +70,7 @@ public class AcrasEncryption
     }
     catch(Exception e)
     {
-      throw new AcrasEncryptionException(e.getClass().getName() + ": " + e.getMessage());
+      throw new GenericEncryptionException(e.getClass().getName() + ": " + e.getMessage());
     }
     
     String outputStr = new String(output);
@@ -79,7 +81,7 @@ public class AcrasEncryption
     return outputStr.substring(0, outputStr.length() - padCount);
   }
   
-  public static String decryptString(String encryptedStr) throws AcrasEncryptionException
+  public static String decryptString(String encryptedStr) throws GenericEncryptionException
   {
     String s = decryptRawString(encryptedStr);
 
@@ -92,4 +94,3 @@ public class AcrasEncryption
     return s.substring(c, s.length() - c);
   }
 }
-

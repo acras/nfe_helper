@@ -1,3 +1,5 @@
+package br.com.acras.nfe;
+
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -13,6 +15,9 @@ import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
+
+import br.com.acras.utils.GenericEncryption;
+import br.com.acras.utils.GenericEncryptionException;
 
 class WebServiceClientInitializationHandler extends CustomHttpHandler
 {
@@ -65,9 +70,9 @@ class WebServiceClientInitializationHandler extends CustomHttpHandler
     
     try
     {
-      password = AcrasEncryption.decryptString(trustStorePassword);
+      password = GenericEncryption.decryptString(trustStorePassword);
     }
-    catch(AcrasEncryptionException e)
+    catch(GenericEncryptionException e)
     {
       throw new BadRequestException("Trust store password not properly encoded");
     }

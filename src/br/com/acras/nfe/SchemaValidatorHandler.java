@@ -1,3 +1,5 @@
+package br.com.acras.nfe;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;

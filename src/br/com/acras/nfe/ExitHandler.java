@@ -1,3 +1,5 @@
+package br.com.acras.nfe;
+
 import com.sun.net.httpserver.HttpServer;
 
 /*

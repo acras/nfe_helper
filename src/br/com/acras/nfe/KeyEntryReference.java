@@ -1,3 +1,5 @@
+package br.com.acras.nfe;
+
 import java.security.KeyStore;
 
 public class KeyEntryReference

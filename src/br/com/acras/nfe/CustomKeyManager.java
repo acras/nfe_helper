@@ -1,3 +1,5 @@
+package br.com.acras.nfe;
+
 import java.net.Socket;
 
 import java.security.KeyStore;

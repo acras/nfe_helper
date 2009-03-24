@@ -1,3 +1,5 @@
+package br.com.acras.nfe;
+
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.IOException;
@@ -10,6 +12,9 @@ import java.security.KeyStoreException;
 import java.security.UnrecoverableKeyException;
 
 import com.sun.net.httpserver.HttpExchange;
+
+import br.com.acras.utils.GenericEncryption;
+import br.com.acras.utils.GenericEncryptionException;
 
 class KeyStoreInitializationHandler extends CustomHttpHandler
 {
@@ -137,9 +142,9 @@ abstract class KeyStoreManager
     
     try
     {
-      keyStorePassword = AcrasEncryption.decryptString(paramKSPassword);
+      keyStorePassword = GenericEncryption.decryptString(paramKSPassword);
     }
-    catch(AcrasEncryptionException e)
+    catch(GenericEncryptionException e)
     {
       throw new BadRequestException("Key store password not properly encoded");
     }
@@ -163,7 +168,7 @@ abstract class KeyStoreManager
     return null;
   }
   
-  protected KeyStore.PasswordProtection getKeyEntryPassword() throws AcrasEncryptionException
+  protected KeyStore.PasswordProtection getKeyEntryPassword() throws GenericEncryptionException
   {
     return null;
   }
@@ -217,10 +222,10 @@ class JKSManager extends KeyStoreManager
     }
   }
   
-  protected KeyStore.PasswordProtection getKeyEntryPassword() throws AcrasEncryptionException
+  protected KeyStore.PasswordProtection getKeyEntryPassword() throws GenericEncryptionException
   {
     return new KeyStore.PasswordProtection(
-        AcrasEncryption.decryptString(paramKEPassword).toCharArray());
+        GenericEncryption.decryptString(paramKEPassword).toCharArray());
   }
 }
 

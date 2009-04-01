@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.PrintStream;
 
 import java.util.Map;
+import java.util.Enumeration;
 
 import java.security.KeyStore;
 import java.security.KeyStoreException;
@@ -40,12 +41,15 @@ class KeyStoreInitializationHandler extends CustomHttpHandler
     
     ksm.validateParams();
     
-    String mapEntry = getMapEntry(paramKSType, paramKSFile, paramKEAlias);
+    String effectiveAlias = ksm.getEffectiveAlias();
+    
+    String mapEntry = getMapEntry(paramKSType, paramKSFile, effectiveAlias);
     keyEntryMap.remove(mapEntry);
     
-    KeyStore.PrivateKeyEntry keyEntry = ksm.getEntry();
+    KeyStore.PrivateKeyEntry keyEntry = ksm.getEntry(effectiveAlias);
     
-    keyEntryMap.put(mapEntry, new KeyEntryReference(ksm.getKeyStore(), paramKEAlias, keyEntry));
+    keyEntryMap.put(
+        mapEntry, new KeyEntryReference(ksm.getKeyStore(), effectiveAlias, keyEntry));
     exchange.addHeader(mapEntryHeader, mapEntry);
   }
 
@@ -88,6 +92,9 @@ abstract class KeyStoreManager
     else if (ksType.compareTo("PKCS11") == 0)
       return new PKCS11Manager(
           paramKSType, paramKSFile, paramKSPassword, paramKEAlias, paramKEPassword);
+    else if (ksType.compareTo("PKCS12") == 0)
+      return new PKCS12Manager(
+          paramKSType, paramKSFile, paramKSPassword, paramKEAlias, paramKEPassword);
     else
       throw new NotFoundException("Invalid key store type: " + ksType);
   }
@@ -111,24 +118,45 @@ abstract class KeyStoreManager
     return keyStore;
   }
   
-  public KeyStore.PrivateKeyEntry getEntry() throws Exception
+  public String getEffectiveAlias() throws NotFoundException, KeyStoreException
+  {
+    String result = paramKEAlias;
+    // Se o alias não for informado usa a primeira entrada que encontrar
+    if (result == null)
+    {
+      Enumeration aliases = keyStore.aliases();
+      while (aliases.hasMoreElements())
+      {
+        String s = (String) aliases.nextElement();
+        if (keyStore.isKeyEntry(s))
+        {
+          result = s;
+          break;
+        }
+      }
+    }
+    if (result == null)
+      throw new NotFoundException("No key entry found in key store");
+    
+    return result;
+  }
+  
+  public KeyStore.PrivateKeyEntry getEntry(String alias) throws Exception
   {
     KeyStore.PrivateKeyEntry result;
     KeyStore.PasswordProtection keyEntryPassword = getKeyEntryPassword();
     
     try
     {
-      result = (KeyStore.PrivateKeyEntry) keyStore.getEntry(paramKEAlias, keyEntryPassword);
+      result = (KeyStore.PrivateKeyEntry) keyStore.getEntry(alias, keyEntryPassword);
     }
     catch(UnrecoverableKeyException e)
     {
-      throw new ForbiddenException(
-          "Incorrect password for key " + paramKEAlias);
+      throw new ForbiddenException("Incorrect password for key " + alias);
     }
     
     if (result == null)
-      throw new NotFoundException(
-          "Alias " + paramKEAlias + " not found in key store"); 
+      throw new NotFoundException("Alias " + alias + " not found in key store"); 
     
     return result;
   }
@@ -191,22 +219,12 @@ class PKCS11Manager extends KeyStoreManager
   }
 }
 
-class JKSManager extends KeyStoreManager
+abstract class FileKeyStoreManager extends KeyStoreManager
 {
-  public JKSManager(String paramKSType, String paramKSFile, String paramKSPassword,
+  public FileKeyStoreManager(String paramKSType, String paramKSFile, String paramKSPassword,
       String paramKEAlias, String paramKEPassword) throws Exception
   {
     super(paramKSType, paramKSFile, paramKSPassword, paramKEAlias, paramKEPassword);
-  }
-  
-  public void validateParams() throws BadRequestException
-  {
-    if (paramKSFile == null || paramKSPassword == null ||
-        paramKEAlias == null || paramKEPassword == null)
-      throw new BadRequestException(
-          "JKS key store requires all of the following params: " +
-          "keystorefile, keystorepassword, keyentryalias, " +
-          "keyentrypassword");
   }
   
   protected InputStream getKeyStream() throws HttpException
@@ -217,15 +235,55 @@ class JKSManager extends KeyStoreManager
     }
     catch(FileNotFoundException e)
     {
-      throw new NotFoundException(
-          "Key store " + paramKSFile + " does not exist");
+      throw new NotFoundException("Key store " + paramKSFile + " does not exist");
     }
   }
   
   protected KeyStore.PasswordProtection getKeyEntryPassword() throws GenericEncryptionException
   {
+    // Se a senha da chave estiver ausente usa a mesma do key store 
+    String password;
+    if (paramKEPassword != null)
+      password = paramKEPassword;
+    else
+      password = paramKSPassword;
+
     return new KeyStore.PasswordProtection(
-        GenericEncryption.decryptString(paramKEPassword).toCharArray());
+        GenericEncryption.decryptString(password).toCharArray());
+  }
+}
+
+class PKCS12Manager extends FileKeyStoreManager
+{
+  public PKCS12Manager(String paramKSType, String paramKSFile, String paramKSPassword,
+      String paramKEAlias, String paramKEPassword) throws Exception
+  {
+    super(paramKSType, paramKSFile, paramKSPassword, paramKEAlias, paramKEPassword);
+  }
+  
+  public void validateParams() throws BadRequestException
+  {
+    if (paramKSFile == null || paramKSPassword == null)
+      throw new BadRequestException(
+          "PKCS12 key store requires all of the following params: " +
+          "keystorefile, keystorepassword");
+  }
+}
+
+class JKSManager extends FileKeyStoreManager
+{
+  public JKSManager(String paramKSType, String paramKSFile, String paramKSPassword,
+      String paramKEAlias, String paramKEPassword) throws Exception
+  {
+    super(paramKSType, paramKSFile, paramKSPassword, paramKEAlias, paramKEPassword);
+  }
+  
+  public void validateParams() throws BadRequestException
+  {
+    if (paramKSFile == null || paramKSPassword == null)
+      throw new BadRequestException(
+          "JKS key store requires all of the following params: " +
+          "keystorefile, keystorepassword");
   }
 }
 

@@ -18,7 +18,7 @@ public class GenericEncryption
       -66, 95, -71, -14, 69, 57, 23, 41, -118 };
   private static final String padString = "{pad}"; 
       
-  private static Cipher getAESCipher()
+  private static Cipher getAESCipher(int opmode)
       throws NoSuchAlgorithmException, NoSuchPaddingException,
       InvalidKeyException, InvalidAlgorithmParameterException
   {
@@ -26,71 +26,63 @@ public class GenericEncryption
     IvParameterSpec ivSpec = new IvParameterSpec(initVector);
       
     Cipher result = Cipher.getInstance("AES/CBC/PKCS5Padding");
-    result.init(Cipher.DECRYPT_MODE, keySpec, ivSpec);
+    result.init(opmode, keySpec, ivSpec);
     
     return result;
   };
       
-  private static byte[] packStringOfHexes(String stringOfHexes)
-  {
-    char[] strChars = stringOfHexes.toCharArray();
-    byte[] result = new byte[strChars.length / 2];
-    
-    for (int i = 0; i < result.length; i++)
-      result[i] = (byte) (Character.digit(strChars[i * 2], 16) * 16 +
-                          Character.digit(strChars[i * 2 + 1], 16)); 
-    
-    return result;
-  }
-  
   private static void throwInvalidStringError() throws GenericEncryptionException
   {
     throw new GenericEncryptionException("Invalid encrypted string");
   }
   
-  private static String decryptRawString(String str) throws GenericEncryptionException
+  public static String decryptString(String str) throws GenericEncryptionException
   {
-    byte[] rawInput = packStringOfHexes(str);
-    byte[] input = new byte[rawInput.length - 1];
-    
-    // O ruby-aes adiciona um byte que representa o número de caracteres usados
-    // como "padding". Como o Java trata a string cifrada apenas como blocos 
-    // devemos remover nós mesmos esses caracteres
-    System.arraycopy(rawInput, 0, input, 0, input.length);
-    int padCount = rawInput[rawInput.length - 1];
-    
-    byte[] output = new byte[input.length];
+    byte[] input = HexString.decode(str);
+    byte[] output;
     
     try
     {
-      Cipher cipher = getAESCipher();
-      
-      int outputLength = cipher.update(input, 0, input.length, output, 0);
-      outputLength += cipher.doFinal(output, outputLength);
+      Cipher cipher = getAESCipher(Cipher.DECRYPT_MODE);
+      output = cipher.doFinal(input);
     }
     catch(Exception e)
     {
-      throw new GenericEncryptionException(e.getClass().getName() + ": " + e.getMessage());
+      throw new GenericEncryptionException(e);
     }
     
-    String outputStr = new String(output);
-
-    if (outputStr.length() < padCount)
-      throwInvalidStringError();
-    
-    return outputStr.substring(0, outputStr.length() - padCount);
-  }
-  
-  public static String decryptString(String encryptedStr) throws GenericEncryptionException
-  {
-    String s = decryptRawString(encryptedStr);
-
-    String pad = padString; 
+    String s = new String(output);
     int c = padString.length();
     
-    if (s.length() < 2 * c || !s.startsWith(pad) || !s.endsWith(pad))
+    if (s.length() < 2 * c || !s.startsWith(padString) || !s.endsWith(padString))
       throwInvalidStringError();
     
     return s.substring(c, s.length() - c);
+  }
+  
+  public static String encryptString(String decryptedStr) throws GenericEncryptionException
+  {
+    byte output[];
+    String s = padString + decryptedStr + padString;
+    
+    try
+    {
+      Cipher cipher = getAESCipher(Cipher.ENCRYPT_MODE);
+      output = cipher.doFinal(s.getBytes("UTF-8"));
+    }
+    catch(Exception e)
+    {
+      throw new GenericEncryptionException(e);
+    }
+    
+    for (int i = 0; i < output.length; i++)
+    {
+      int j = output[i] & 0xff;       
+      System.out.print(Character.forDigit(j / 16, 16));
+      System.out.print(Character.forDigit(j % 16, 16));
+    }
+    System.out.print("\n");
+    
+    return "";
   }
 }

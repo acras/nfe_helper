@@ -6,4 +6,9 @@ public class GenericEncryptionException extends Exception
   {
     super(message);
   }
+
+  public GenericEncryptionException(Exception e)
+  {
+    super(e);
+  }
 }

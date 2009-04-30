@@ -15,9 +15,6 @@ public class EncryptString
       String str = GenericEncryption.encryptString(args[0]);
       
       System.out.print(str);
-      System.out.print(" (");
-      System.out.print(str.length());
-      System.out.print(" characters)");
       System.out.print("\n");
     }
     catch(Exception e)

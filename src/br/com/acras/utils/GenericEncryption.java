@@ -38,11 +38,11 @@ public class GenericEncryption
   
   public static String decryptString(String str) throws GenericEncryptionException
   {
-    byte[] input = HexString.decode(str);
     byte[] output;
     
     try
     {
+      byte[] input = HexString.decode(str);
       Cipher cipher = getAESCipher(Cipher.DECRYPT_MODE);
       output = cipher.doFinal(input);
     }
@@ -60,29 +60,21 @@ public class GenericEncryption
     return s.substring(c, s.length() - c);
   }
   
-  public static String encryptString(String decryptedStr) throws GenericEncryptionException
+  public static String encryptString(String str) throws GenericEncryptionException
   {
     byte output[];
-    String s = padString + decryptedStr + padString;
+    String inputStr = padString + str + padString;
     
     try
     {
       Cipher cipher = getAESCipher(Cipher.ENCRYPT_MODE);
-      output = cipher.doFinal(s.getBytes("UTF-8"));
+      output = cipher.doFinal(inputStr.getBytes("UTF-8"));
     }
     catch(Exception e)
     {
       throw new GenericEncryptionException(e);
     }
     
-    for (int i = 0; i < output.length; i++)
-    {
-      int j = output[i] & 0xff;       
-      System.out.print(Character.forDigit(j / 16, 16));
-      System.out.print(Character.forDigit(j % 16, 16));
-    }
-    System.out.print("\n");
-    
-    return "";
+    return HexString.encode(output);
   }
 }

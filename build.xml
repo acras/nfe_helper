@@ -13,7 +13,7 @@
     <!-- Create the build directory structure used by compile -->
     <mkdir dir="${build}"/>
     <!-- Compile the java code from ${src} into ${build} -->
-    <javac srcdir="${src}" destdir="${build}"/>
+    <javac srcdir="${src}" destdir="${build}" target="1.5"/>
   </target>
 
   <target name="dist" depends="compile" description="generate the distribution">

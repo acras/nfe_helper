@@ -117,7 +117,14 @@ public class CustomHttpExchange
   private void initPrintStream()
   {
     byteArrayOutputStream = new ByteArrayOutputStream();
-    printStream = new PrintStream(byteArrayOutputStream);
+    try
+    {
+      printStream = new PrintStream(byteArrayOutputStream, false, "UTF-8");
+    }
+    catch(UnsupportedEncodingException e)
+    {
+      throw new RuntimeException(e);
+    }
   }
   
   private Map<String, String> decodeURIQuery(URI uri)

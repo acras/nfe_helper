@@ -7,9 +7,9 @@ class GatewayTimeoutException extends HttpException
     super(message);
   }
 
-  public GatewayTimeoutException(Exception exception)
+  public GatewayTimeoutException(Throwable cause)
   {
-    super(exception);
+    super(cause);
   }
 
   protected int getResponseCode()

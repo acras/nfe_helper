@@ -12,6 +12,9 @@ import com.sun.net.httpserver.HttpServer;
 
 public class HelperServer
 {
+  private static final String connectTimeoutProp = "sun.net.client.defaultConnectTimeout";
+  private static final String readTimeoutProp = "sun.net.client.defaultReadTimeout";
+  
   public static void main(String[] args)
   {
     try
@@ -34,6 +37,26 @@ public class HelperServer
       else
         showUsage();
 
+      // Se não for especificado vamos definir um timeout razoável para as
+      // operações, para evitar que uma demora no acesso ao servidor da SEFA não
+      // esgote o pool e impeça tarefas como validação e assinatura de xmls.
+      //
+      // No caso do timeout de conexão o valor pode ser bem baixo pois, se a
+      // conexão não foi efetuada sabemos que nenhuma informação chegou à SEFA.
+      // Para o timeout de leitura existe esse problema adicional: se o valor
+      // for baixo demais aumentará a chance de que, durante uma conexão lenta,
+      // um pedido chegue à SEFA mas esta aplicação aborte antes da conexão
+      // terminar espontaneamente.
+      //
+      // De qualquer forma é importante que o timeout do cliente desta aplicação
+      // seja grande o suficiente para não abortar a conexão antes que esta
+      // aborte a conexão com a SEFA.
+      //
+      if (null == System.getProperty(connectTimeoutProp))
+        System.setProperty(connectTimeoutProp, "4000");
+      if (null == System.getProperty(readTimeoutProp))
+        System.setProperty(readTimeoutProp, "12000");
+      
       startServer(port);
     }
     catch(Exception e)

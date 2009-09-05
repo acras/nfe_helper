@@ -59,7 +59,8 @@ class SchemaValidatorHandler extends CustomHttpHandler
     return result;
   }
   
-  private Validator getSchemaValidator(CustomHttpExchange exchange, String schemaFileName)
+  private synchronized Validator getSchemaValidator(CustomHttpExchange exchange,
+      String schemaFileName)
   {
     Schema schemaGrammar = schemaGrammarMap.get(schemaFileName);
     if (schemaGrammar == null)

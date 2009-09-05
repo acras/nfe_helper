@@ -41,21 +41,27 @@ class KeyStoreInitializationHandler extends CustomHttpHandler
     
     ksm.validateParams();
     
-    String effectiveAlias = ksm.getEffectiveAlias();
-    
-    String mapEntry = getMapEntry(paramKSType, paramKSFile, effectiveAlias);
-    keyEntryMap.remove(mapEntry);
-    
-    KeyStore.PrivateKeyEntry keyEntry = ksm.getEntry(effectiveAlias);
-    
-    keyEntryMap.put(
-        mapEntry, new KeyEntryReference(ksm.getKeyStore(), effectiveAlias, keyEntry));
-    exchange.addHeader(mapEntryHeader, mapEntry);
+    exchange.addHeader(mapEntryHeader, initKeyStore(ksm));
   }
 
   protected String getAllowedMethod()
   {
     return "GET"; 
+  }
+  
+  private synchronized String initKeyStore(KeyStoreManager ksm) throws Exception
+  {
+    String effectiveAlias = ksm.getEffectiveAlias();
+    
+    String mapEntry = getMapEntry(ksm.getKSType(), ksm.getKSFile(), effectiveAlias);
+    keyEntryMap.remove(mapEntry);
+    
+    KeyStore.PrivateKeyEntry keyEntry = ksm.getEntry(effectiveAlias);
+    
+    keyEntryMap.put(mapEntry,
+        new KeyEntryReference(ksm.getKeyStore(), effectiveAlias, keyEntry));
+    
+    return mapEntry;
   }
   
   private String getMapEntry(String paramKSType, String paramKSFile,
@@ -109,6 +115,16 @@ abstract class KeyStoreManager
     this.paramKEPassword = paramKEPassword;
     
     keyStore = loadKeyStore();
+  }
+  
+  public String getKSType()
+  {
+    return paramKSType;
+  }
+  
+  public String getKSFile()
+  {
+    return paramKSFile;
   }
   
   abstract public void validateParams() throws BadRequestException;

@@ -25,7 +25,7 @@ class WebServiceClientInitializationHandler extends CustomHttpHandler
   
   public WebServiceClientInitializationHandler(Map<String, KeyEntryReference> keyEntryMap)
   {
-    this.keyEntryMap = keyEntryMap;    
+    this.keyEntryMap = keyEntryMap;
   }
   
   protected void handle(CustomHttpExchange exchange) throws Exception
@@ -38,7 +38,18 @@ class WebServiceClientInitializationHandler extends CustomHttpHandler
     if (keRef == null)
       throw new NotFoundException("No key entry with id " + keyStoreId +
           " was found (not initialized?)");
-      
+
+    initSSLSocketFactory(keRef, trustStoreFile, trustStorePassword);      
+  }
+  
+  protected String getAllowedMethod()
+  {
+    return "GET";
+  }
+  
+  private synchronized void initSSLSocketFactory(KeyEntryReference keRef,
+      String trustStoreFile, String trustStorePassword) throws Exception
+  {
     SSLContext context = SSLContext.getInstance("SSL");
     context.init(
         createKeyManagers(keRef),
@@ -46,11 +57,6 @@ class WebServiceClientInitializationHandler extends CustomHttpHandler
         null);
     
     HttpsURLConnection.setDefaultSSLSocketFactory(context.getSocketFactory());
-  }
-  
-  protected String getAllowedMethod()
-  {
-    return "GET";
   }
   
   private TrustManager[] createTrustManagers(String trustStoreFile, String trustStorePassword)

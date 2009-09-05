@@ -18,6 +18,8 @@ abstract class CustomHttpHandler implements HttpHandler
       CustomHttpExchange exchange = new CustomHttpExchange(t);
       try
       {
+        long timerBefore = System.nanoTime();
+        
         try
         { 
           exchange.checkMethod(getAllowedMethod());
@@ -35,11 +37,15 @@ abstract class CustomHttpHandler implements HttpHandler
           e.printStackTrace(exchange.getPrintStream());
         }
 
+        long timerAfter = System.nanoTime();
+        
         System.err.print("=> ");
         System.err.print(new Date());
-        System.err.print(" ");
+        System.err.print(" | ");
         System.err.print(t.getRequestURI());
-        System.err.print(" ");
+        System.err.print(" | ");
+        System.err.printf("%.5f s", (timerAfter - timerBefore) * 1e-9);
+        System.err.print(" | ");
         System.err.print(responseCode);        
         System.err.print("\n");
       }

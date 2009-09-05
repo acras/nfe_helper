@@ -1,5 +1,7 @@
 package br.com.acras.nfe;
 
+import java.net.SocketTimeoutException;
+
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.IOException;
@@ -20,6 +22,7 @@ import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
+import javax.xml.ws.BindingProvider;
 import javax.xml.ws.Dispatch;
 import javax.xml.ws.Service;
 import javax.xml.ws.WebServiceException;
@@ -86,10 +89,14 @@ class WebServiceInvokationHandler extends CustomHttpHandler
     }
     catch(WebServiceException e)
     {
-      if (e.getMessage().contains("Connection timed out"))
-        throw new GatewayTimeoutException(e);
-      else
-        throw new BadGatewayException(e);
+      Throwable cause = e;
+      while (null != (cause = cause.getCause()))
+      {
+        if (cause instanceof SocketTimeoutException)
+          throw new GatewayTimeoutException(e);
+      }
+
+      throw new BadGatewayException(e);
     }
     
     Node responseBody = response.getSOAPBody();

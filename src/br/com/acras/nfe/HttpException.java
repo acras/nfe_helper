@@ -7,10 +7,10 @@ abstract class HttpException extends Exception
     super(message);
   }
   
-  public HttpException(Exception exception)
+  public HttpException(Throwable cause)
   {
-    super(exception.getClass().getName() + ": " + exception.getMessage());
+    super(cause.getClass().getName() + ": " + cause.getMessage());
   }
-  
+
   abstract protected int getResponseCode();
 }

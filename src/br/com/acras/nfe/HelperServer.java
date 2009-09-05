@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import java.util.Map;
 import java.util.HashMap;
+import java.util.concurrent.Executors;
 
 import java.net.InetSocketAddress;
 
@@ -70,7 +71,7 @@ public class HelperServer
         "/invokews",
         new WebServiceInvokationHandler());
     
-    server.setExecutor(null);
+    server.setExecutor(Executors.newFixedThreadPool(10));
     server.start();
   }
 }

@@ -2,6 +2,8 @@ package br.com.acras.nfe;
 
 import java.io.IOException;
 
+import java.util.Date;
+
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 
@@ -15,9 +17,9 @@ abstract class CustomHttpHandler implements HttpHandler
       
       CustomHttpExchange exchange = new CustomHttpExchange(t);
       try
-      {    
+      {
         try
-        {
+        { 
           exchange.checkMethod(getAllowedMethod());
           handle(exchange);
           responseCode = 200;
@@ -32,6 +34,14 @@ abstract class CustomHttpHandler implements HttpHandler
           responseCode = 500;
           e.printStackTrace(exchange.getPrintStream());
         }
+
+        System.err.print("=> ");
+        System.err.print(new Date());
+        System.err.print(" ");
+        System.err.print(t.getRequestURI());
+        System.err.print(" ");
+        System.err.print(responseCode);        
+        System.err.print("\n");
       }
       finally
       {

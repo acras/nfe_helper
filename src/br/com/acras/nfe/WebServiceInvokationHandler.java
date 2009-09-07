@@ -51,6 +51,10 @@ class WebServiceInvokationHandler extends CustomHttpHandler
     
     Dispatch<SOAPMessage> dispatch =
         service.createDispatch(portQN, SOAPMessage.class, Service.Mode.MESSAGE);
+        
+    Map<String, Object> ctxt = ((BindingProvider) dispatch).getRequestContext();
+    ctxt.put(BindingProvider.SOAPACTION_USE_PROPERTY, true);
+    ctxt.put(BindingProvider.SOAPACTION_URI_PROPERTY, namespace + "/" + operationName);
 
     String response = invokeService(
         dispatch, namespace, operationName, exchange.getInputStream());

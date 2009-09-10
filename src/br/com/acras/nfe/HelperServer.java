@@ -52,10 +52,13 @@ public class HelperServer
       // seja grande o suficiente para não abortar a conexão antes que esta
       // aborte a conexão com a SEFA.
       //
+      // (Foi escolhido um timeout de 30 segundos para leitura porque em
+      // Set/2009 notou-se que em alguns períodos as requisições feitas à SEFA
+      // chegavam a demorar 20 segundos.)
       if (null == System.getProperty(connectTimeoutProp))
-        System.setProperty(connectTimeoutProp, "4000");
+        System.setProperty(connectTimeoutProp, "5000");
       if (null == System.getProperty(readTimeoutProp))
-        System.setProperty(readTimeoutProp, "12000");
+        System.setProperty(readTimeoutProp, "30000");
       
       startServer(port);
     }

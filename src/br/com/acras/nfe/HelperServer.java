@@ -1,6 +1,10 @@
 package br.com.acras.nfe;
 
+import java.io.File;
 import java.io.IOException;
+
+import java.security.Provider;
+import java.security.Security;
 
 import java.util.Map;
 import java.util.HashMap;
@@ -37,28 +41,8 @@ public class HelperServer
       else
         showUsage();
 
-      // Se não for especificado vamos definir um timeout razoável para as
-      // operações, para evitar que uma demora no acesso ao servidor da SEFA não
-      // esgote o pool e impeça tarefas como validação e assinatura de xmls.
-      //
-      // No caso do timeout de conexão o valor pode ser bem baixo pois, se a
-      // conexão não foi efetuada sabemos que nenhuma informação chegou à SEFA.
-      // Para o timeout de leitura existe esse problema adicional: se o valor
-      // for baixo demais aumentará a chance de que, durante uma conexão lenta,
-      // um pedido chegue à SEFA mas esta aplicação aborte antes da conexão
-      // terminar espontaneamente.
-      //
-      // De qualquer forma é importante que o timeout do cliente desta aplicação
-      // seja grande o suficiente para não abortar a conexão antes que esta
-      // aborte a conexão com a SEFA.
-      //
-      // (Foi escolhido um timeout de 30 segundos para leitura porque em
-      // Set/2009 notou-se que em alguns períodos as requisições feitas à SEFA
-      // chegavam a demorar 20 segundos.)
-      if (null == System.getProperty(connectTimeoutProp))
-        System.setProperty(connectTimeoutProp, "5000");
-      if (null == System.getProperty(readTimeoutProp))
-        System.setProperty(readTimeoutProp, "30000");
+      configTimeouts();
+      configPKCS11();
       
       startServer(port);
     }
@@ -99,5 +83,44 @@ public class HelperServer
     
     server.setExecutor(Executors.newFixedThreadPool(10));
     server.start();
+  }
+  
+  private static void configTimeouts()
+  {
+    // Se não for especificado vamos definir um timeout razoável para as
+    // operações, para evitar que uma demora no acesso ao servidor da SEFA não
+    // esgote o pool e impeça tarefas como validação e assinatura de xmls.
+    //
+    // No caso do timeout de conexão o valor pode ser bem baixo pois, se a
+    // conexão não foi efetuada sabemos que nenhuma informação chegou à SEFA.
+    // Para o timeout de leitura existe esse problema adicional: se o valor
+    // for baixo demais aumentará a chance de que, durante uma conexão lenta,
+    // um pedido chegue à SEFA mas esta aplicação aborte antes da conexão
+    // terminar espontaneamente.
+    //
+    // De qualquer forma é importante que o timeout do cliente desta aplicação
+    // seja grande o suficiente para não abortar a conexão antes que esta
+    // aborte a conexão com a SEFA.
+    //
+    // (Foi escolhido um timeout de 30 segundos para leitura porque em
+    // Set/2009 notou-se que em alguns períodos as requisições feitas à SEFA
+    // chegavam a demorar 20 segundos.)
+    if (null == System.getProperty(connectTimeoutProp))
+      System.setProperty(connectTimeoutProp, "5000");
+    if (null == System.getProperty(readTimeoutProp))
+      System.setProperty(readTimeoutProp, "30000");
+  }
+  
+  private static void configPKCS11()
+  {
+    // Se existe um arquivo de configuração lib/certificates/pkcs11.cfg
+    // adicionamos um provider apropriado
+    String path = "lib" + File.pathSeparator + "certificates" +
+        File.pathSeparator + "pkcs11.cfg";
+    if ((new File(path)).exists())
+    {
+      Provider provider = new sun.security.pkcs11.SunPKCS11(path);
+      Security.addProvider(provider);
+    }
   }
 }

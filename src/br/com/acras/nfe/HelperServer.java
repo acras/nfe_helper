@@ -115,8 +115,8 @@ public class HelperServer
   {
     // Se existe um arquivo de configuração lib/certificates/pkcs11.cfg
     // adicionamos um provider apropriado
-    String path = "lib" + File.pathSeparator + "certificates" +
-        File.pathSeparator + "pkcs11.cfg";
+    String path = "lib" + File.separator + "certificates" +
+        File.separator + "pkcs11.cfg";
     if ((new File(path)).exists())
     {
       System.err.println("=> Found config file " + path + ". Adding PKCS11 provider...");

@@ -119,8 +119,10 @@ public class HelperServer
         File.pathSeparator + "pkcs11.cfg";
     if ((new File(path)).exists())
     {
+      System.err.println("=> Found config file " + path + ". Adding PKCS11 provider...");
       Provider provider = new sun.security.pkcs11.SunPKCS11(path);
       Security.addProvider(provider);
+      System.err.println("=> Provider registered sucessfully.");
     }
   }
 }

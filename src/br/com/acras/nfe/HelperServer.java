@@ -19,32 +19,96 @@ public class HelperServer
   private static final String connectTimeoutProp = "sun.net.client.defaultConnectTimeout";
   private static final String readTimeoutProp = "sun.net.client.defaultReadTimeout";
   
+  int port = 0;
+  HttpServer http_server = null;
+  
+  /**
+    * Os métodos init(), start(), stop(), destroy() constituem a interface que permite à esta
+    * classe ser lançada pelo jsvc (http://commons.apache.org/daemon/jsvc.html). Estas e o
+    * restante do código foram escritos de forma que o servidor possa ser chamado tanto como
+    * daemon (Unix) quando como console. No Windows não é necessário código especial porque o
+    * jsl.exe (http://92.51.133.148/jsl/howto.html) já fica feliz com o main().
+    */
+  public void init(String[] args) throws Exception
+  {
+    if (args.length == 0)
+      this.port = 9990;
+    else if (args.length == 2 && args[0].compareTo("-p") == 0)
+    {
+      try
+      {
+        this.port = Integer.parseInt(args[1]);          
+      }
+      catch(NumberFormatException e)
+      {
+        showUsage();
+      }
+    }
+    else
+      showUsage();
+
+    configTimeouts();
+    configPKCS11();
+  }
+  
+  public void start() throws Exception
+  {
+    Map<String, KeyEntryReference> keyEntryMap = new HashMap<String, KeyEntryReference>();
+    
+    this.http_server = HttpServer.create(new InetSocketAddress(this.port), 0);
+
+    try
+    {
+      this.http_server.createContext(
+          "/validate",
+          new SchemaValidatorHandler());
+      this.http_server.createContext(
+          "/initkeystore",
+          new KeyStoreInitializationHandler(keyEntryMap));
+      this.http_server.createContext(
+          "/sign",
+          new SignHandler(keyEntryMap));
+      this.http_server.createContext(
+          "/initwsclient",
+          new WebServiceClientInitializationHandler(keyEntryMap));
+      this.http_server.createContext(
+          "/invokews",
+          new WebServiceInvokationHandler());
+      
+      this.http_server.setExecutor(Executors.newFixedThreadPool(10));
+      this.http_server.start();
+    }
+    catch (Exception e)
+    {
+      this.http_server = null;
+      throw e;
+    }
+  }
+
+  public void stop() throws Exception
+  {
+    try
+    {
+      this.http_server.stop(3);
+    }
+    finally
+    {
+      this.http_server = null;
+    }
+  }
+  
+  public void destroy() throws Exception
+  {
+    
+  }
+  
   public static void main(String[] args)
   {
     try
     {
-      int port = 0;
-
-      if (args.length == 0)
-        port = 9990;
-      else if (args.length == 2 && args[0].compareTo("-p") == 0)
-      {
-        try
-        {
-          port = Integer.parseInt(args[1]);          
-        }
-        catch(NumberFormatException e)
-        {
-          showUsage();
-        }
-      }
-      else
-        showUsage();
-
-      configTimeouts();
-      configPKCS11();
-      
-      startServer(port);
+      final HelperServer s = new HelperServer();
+      s.init(args);
+      s.start();
     }
     catch(Exception e)
     {
@@ -57,32 +121,6 @@ public class HelperServer
   {
     System.err.println("Usage: java HelperServer [-p <port>]");
     System.exit(2);
-  }
-  
-  private static void startServer(int port) throws IOException
-  {
-    Map<String, KeyEntryReference> keyEntryMap = new HashMap<String, KeyEntryReference>();
-    
-    HttpServer server = HttpServer.create(new InetSocketAddress(port), 0);
-    
-    server.createContext(
-        "/validate",
-        new SchemaValidatorHandler());
-    server.createContext(
-        "/initkeystore",
-        new KeyStoreInitializationHandler(keyEntryMap));
-    server.createContext(
-        "/sign",
-        new SignHandler(keyEntryMap));
-    server.createContext(
-        "/initwsclient",
-        new WebServiceClientInitializationHandler(keyEntryMap));
-    server.createContext(
-        "/invokews",
-        new WebServiceInvokationHandler());
-    
-    server.setExecutor(Executors.newFixedThreadPool(10));
-    server.start();
   }
   
   private static void configTimeouts()

@@ -3,6 +3,7 @@ package br.com.acras.nfe;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.File;
 
 import java.security.KeyStore;
 import java.security.KeyStoreException;
@@ -21,17 +22,21 @@ import br.com.acras.utils.GenericEncryptionException;
 
 class WebServiceClientInitializationHandler extends CustomHttpHandler
 {
+  String baseDirectory;
   Map<String, KeyEntryReference> keyEntryMap;
   
-  public WebServiceClientInitializationHandler(Map<String, KeyEntryReference> keyEntryMap)
+  public WebServiceClientInitializationHandler(String baseDirectory,
+      Map<String, KeyEntryReference> keyEntryMap)
   {
+    this.baseDirectory = baseDirectory;
     this.keyEntryMap = keyEntryMap;
   }
   
   protected void handle(CustomHttpExchange exchange) throws Exception
   {
     String keyStoreId = exchange.getParameter("keystoreid");
-    String trustStoreFile = exchange.getParameter("truststorefile");
+    String trustStoreFile = baseDirectory + File.separator +
+        exchange.getParameter("truststorefile");
     String trustStorePassword = exchange.getParameter("truststorepassword");
 
     KeyEntryReference keRef = keyEntryMap.get(keyStoreId);

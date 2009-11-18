@@ -20,6 +20,7 @@ public class HelperServer
   private static final String readTimeoutProp = "sun.net.client.defaultReadTimeout";
   
   int port = 0;
+  String baseDirectory = ".";
   HttpServer http_server = null;
   
   /**
@@ -31,22 +32,35 @@ public class HelperServer
     */
   public void init(String[] args) throws Exception
   {
-    if (args.length == 0)
-      this.port = 9990;
-    else if (args.length == 2 && args[0].compareTo("-p") == 0)
+    this.port = 9990;
+    this.baseDirectory = ".";
+    
+    int k = 0;
+    int cnt = args.length;
+    
+    while (k < cnt)
     {
-      try
+      if (args[k].equals("-p") && k + 1 < cnt)
       {
-        this.port = Integer.parseInt(args[1]);          
+        try
+        {
+          this.port = Integer.parseInt(args[k + 1]);
+        }
+        catch(NumberFormatException e)
+        {
+          showUsage();
+        }
+        k += 2;
       }
-      catch(NumberFormatException e)
+      else if (args[k].equals("-w") && k + 1 < cnt)
       {
+        this.baseDirectory = args[k + 1];
+        k += 2;
+      }
+      else
         showUsage();
-      }
     }
-    else
-      showUsage();
-
+    
     configTimeouts();
     configPKCS11();
   }
@@ -61,16 +75,16 @@ public class HelperServer
     {
       this.http_server.createContext(
           "/validate",
-          new SchemaValidatorHandler());
+          new SchemaValidatorHandler(baseDirectory));
       this.http_server.createContext(
           "/initkeystore",
-          new KeyStoreInitializationHandler(keyEntryMap));
+          new KeyStoreInitializationHandler(baseDirectory, keyEntryMap));
       this.http_server.createContext(
           "/sign",
           new SignHandler(keyEntryMap));
       this.http_server.createContext(
           "/initwsclient",
-          new WebServiceClientInitializationHandler(keyEntryMap));
+          new WebServiceClientInitializationHandler(baseDirectory, keyEntryMap));
       this.http_server.createContext(
           "/invokews",
           new WebServiceInvokationHandler());
@@ -119,7 +133,7 @@ public class HelperServer
   
   private static void showUsage()
   {
-    System.err.println("Usage: java HelperServer [-p <port>]");
+    System.err.println("Usage: java HelperServer [-p <port>] [-w <working dir>]");
     System.exit(2);
   }
   

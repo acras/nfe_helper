@@ -3,6 +3,7 @@ package br.com.acras.nfe;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.IOException;
+import java.io.File;
 import java.io.PrintStream;
 
 import java.util.Map;
@@ -19,12 +20,15 @@ import br.com.acras.utils.GenericEncryptionException;
 
 class KeyStoreInitializationHandler extends CustomHttpHandler
 {
+  String baseDirectory;
   Map<String, KeyEntryReference> keyEntryMap;
   
   final String mapEntryHeader = "X-Key-Store-Id";
   
-  public KeyStoreInitializationHandler(Map<String, KeyEntryReference> keyEntryMap)
+  public KeyStoreInitializationHandler(String baseDirectory,
+      Map<String, KeyEntryReference> keyEntryMap)
   {
+    this.baseDirectory = baseDirectory;
     this.keyEntryMap = keyEntryMap;
   }
   
@@ -35,6 +39,9 @@ class KeyStoreInitializationHandler extends CustomHttpHandler
     String paramKSPassword = exchange.tryParameter("keystorepassword");
     String paramKEAlias = exchange.tryParameter("keyentryalias");
     String paramKEPassword = exchange.tryParameter("keyentrypassword");
+    
+    if (paramKSFile != null && !paramKSFile.isEmpty())
+      paramKSFile = baseDirectory + File.separator + paramKSFile;
     
     KeyStoreManager ksm = KeyStoreManager.createKeyStoreManager(
         paramKSType, paramKSFile, paramKSPassword, paramKEAlias, paramKEPassword);

@@ -19,14 +19,16 @@ import javax.xml.validation.Validator;
 
 class SchemaValidatorHandler extends CustomHttpHandler
 {
+  String baseDirectory;
   Map<String, Schema> schemaGrammarMap;
   
   final String schemaStatusHeader = "X-Schema-File-Status";
   final String schemaCachedHeader = "X-Schema-Loaded-From-Cache";
   final String documentValidHeader = "X-Document-Valid";
       
-  public SchemaValidatorHandler()
+  public SchemaValidatorHandler(String baseDirectory)
   {
+    this.baseDirectory = baseDirectory;
     this.schemaGrammarMap = new HashMap<String, Schema>();
   }
   
@@ -55,6 +57,10 @@ class SchemaValidatorHandler extends CustomHttpHandler
     {
       exchange.addHeader(schemaStatusHeader, "not specified");
       exchange.getPrintStream().println("Schema file was not specified");
+    }
+    else
+    {
+      result = baseDirectory + File.separator + result;
     }
     return result;
   }

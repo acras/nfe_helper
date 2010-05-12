@@ -11,7 +11,6 @@
 
 HELPER_DIR=/home/romulo/projects/java/dist
 NFE_DIR=/home/romulo
-LANG=pt_BR.UTF-8
 VERBOSE=
 
 JAVA_HOME=/usr/lib/jvm/java-6-openjdk/jre
@@ -24,12 +23,12 @@ JSVC_ARGS="-w ${NFE_DIR}"
 
 do_start()
 {
-  jsvc $VERBOSE -home $JAVA_HOME -outfile $LOG_FILE -errfile '&1' -pidfile $PID_FILE -cp $JSVC_CP $JSVC_CLASS $JSVC_ARGS
+  LANG=pt_BR.UTF-8 jsvc $VERBOSE -home $JAVA_HOME -outfile $LOG_FILE -errfile '&1' -pidfile $PID_FILE -cp $JSVC_CP $JSVC_CLASS $JSVC_ARGS
 }
 
 do_stop()
 {
-  jsvc $VERBOSE -home $JAVA_HOME -stop -pidfile $PID_FILE -cp $JSVC_CP $JSVC_CLASS
+  LANG=pt_BR.UTF-8 jsvc $VERBOSE -home $JAVA_HOME -stop -pidfile $PID_FILE -cp $JSVC_CP $JSVC_CLASS
 }
 
 case "$1" in
@@ -51,7 +50,7 @@ case "$1" in
         if [ -e $PID_FILE ]; then
             echo "Serviço iniciado.";
         else
-            echo "Servico parado.";
+            echo "Serviço parado.";
         fi
         ;;
     *)

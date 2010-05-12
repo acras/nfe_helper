@@ -11,6 +11,7 @@
 
 HELPER_DIR=/home/romulo/projects/java/dist
 NFE_DIR=/home/romulo
+JSVC_USER=romulo
 VERBOSE=
 
 JAVA_HOME=/usr/lib/jvm/java-6-openjdk/jre
@@ -23,12 +24,12 @@ JSVC_ARGS="-w ${NFE_DIR}"
 
 do_start()
 {
-  LANG=pt_BR.UTF-8 jsvc $VERBOSE -home $JAVA_HOME -outfile $LOG_FILE -errfile '&1' -pidfile $PID_FILE -cp $JSVC_CP $JSVC_CLASS $JSVC_ARGS
+  LANG=pt_BR.UTF-8 jsvc $VERBOSE -home $JAVA_HOME -user $JSVC_USER -outfile $LOG_FILE -errfile '&1' -pidfile $PID_FILE -cp $JSVC_CP $JSVC_CLASS $JSVC_ARGS
 }
 
 do_stop()
 {
-  LANG=pt_BR.UTF-8 jsvc $VERBOSE -home $JAVA_HOME -stop -pidfile $PID_FILE -cp $JSVC_CP $JSVC_CLASS
+  LANG=pt_BR.UTF-8 jsvc $VERBOSE -home $JAVA_HOME -user $JSVC_USER -stop -pidfile $PID_FILE -cp $JSVC_CP $JSVC_CLASS
 }
 
 case "$1" in

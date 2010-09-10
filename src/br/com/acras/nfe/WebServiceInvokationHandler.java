@@ -57,8 +57,7 @@ class WebServiceInvokationHandler extends CustomHttpHandler
     ctxt.put(BindingProvider.SOAPACTION_USE_PROPERTY, true);
     ctxt.put(BindingProvider.SOAPACTION_URI_PROPERTY, namespace + "/" + operationName);
 
-    String response = invokeService(
-        dispatch, namespace, operationName, exchange.getInputStream());
+    String response = invokeService(dispatch, exchange.getInputStream());
     
     exchange.getPrintStream().println(response);
   }
@@ -68,23 +67,17 @@ class WebServiceInvokationHandler extends CustomHttpHandler
     return "POST";
   }
   
-  private String invokeService(Dispatch<SOAPMessage> dispatch, String namespace,
-      String operationName, InputStream httpBody) throws Exception
+  private String invokeService(Dispatch<SOAPMessage> dispatch,
+      InputStream httpBody) throws Exception
   {
     MessageFactory mf = MessageFactory.newInstance(SOAPConstants.SOAP_1_1_PROTOCOL);
     
     SOAPMessage request = mf.createMessage();
     SOAPBody requestBody = request.getSOAPPart().getEnvelope().getBody();
     
-    String[] params = readParameters(httpBody);
-    String header = params[0];
-    String data = params[1];
+    Document doc = readDocument(httpBody);
 
-    SOAPElement operation = requestBody.addChildElement(operationName, "", namespace);
-    SOAPElement headerNode = operation.addChildElement("nfeCabecMsg");
-    headerNode.addTextNode(header);
-    SOAPElement dataNode = operation.addChildElement("nfeDadosMsg");
-    dataNode.addTextNode(data);
+    requestBody.addDocument(doc);
     request.saveChanges();
     
     SOAPMessage response;
@@ -107,9 +100,9 @@ class WebServiceInvokationHandler extends CustomHttpHandler
     Node responseBody = response.getSOAPBody();
     
     Node responseNode = responseBody.getFirstChild();
-    if (responseNode == null ||
-        !responseNode.getNamespaceURI().equals(namespace) ||
-        responseNode.getNodeType() != Node.ELEMENT_NODE)
+    // Removi a validação de namespace da resposta para simplificar a interface deste método e
+    // porque não parecia muito importante
+    if (responseNode == null || responseNode.getNodeType() != Node.ELEMENT_NODE)
       throwInvalidResponse(responseNode);
 
     Node resultNode = responseNode.getFirstChild();
@@ -124,7 +117,7 @@ class WebServiceInvokationHandler extends CustomHttpHandler
     return result;
   }
   
-  private String[] readParameters(InputStream parameters) throws Exception
+  private Document readDocument(InputStream parameters) throws Exception
   {
     DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
     dbf.setNamespaceAware(true);
@@ -136,30 +129,10 @@ class WebServiceInvokationHandler extends CustomHttpHandler
     }
     catch(SAXException e)
     {
-      checkCondition(false);
+      throw new BadRequestException("Parameters in message body are not properly encoded");
     }
 
-    Node rootNode = doc.getDocumentElement();
-    checkCondition(rootNode.getNodeType() == Node.ELEMENT_NODE);
-    Element rootElement = (Element) rootNode;
-    
-    NodeList headerParam = rootElement.getElementsByTagName("headerParam");
-    checkCondition(headerParam.getLength() == 1);
-    NodeList dataParam = rootElement.getElementsByTagName("dataParam");
-    checkCondition(dataParam.getLength() == 1);
-    
-    String headerParamText = getNodeText(headerParam.item(0));
-    checkCondition(!headerParamText.isEmpty());
-    String dataParamText = getNodeText(dataParam.item(0));
-    checkCondition(!dataParamText.isEmpty());
-    
-    return new String[] { headerParamText, dataParamText };
-  }
-  
-  private void checkCondition(boolean val) throws BadRequestException
-  {
-    if (!val)
-      throw new BadRequestException("Parameters in message body are not properly encoded");
+    return doc;
   }
   
   private void throwInvalidResponse(Node responseNode) throws Exception

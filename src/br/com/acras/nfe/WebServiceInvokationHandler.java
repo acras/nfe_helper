@@ -55,7 +55,7 @@ class WebServiceInvokationHandler extends CustomHttpHandler
         
     Map<String, Object> ctxt = ((BindingProvider) dispatch).getRequestContext();
     ctxt.put(BindingProvider.SOAPACTION_USE_PROPERTY, true);
-    ctxt.put(BindingProvider.SOAPACTION_URI_PROPERTY, namespace + "/" + operationName);
+    ctxt.put(BindingProvider.SOAPACTION_URI_PROPERTY, namespace + operationName);
 
     String response = invokeService(dispatch, exchange.getInputStream());
     
@@ -79,6 +79,9 @@ class WebServiceInvokationHandler extends CustomHttpHandler
 
     requestBody.addDocument(doc);
     request.saveChanges();
+    
+    request.writeTo(System.out);
+    System.out.println("****");
     
     SOAPMessage response;
     try

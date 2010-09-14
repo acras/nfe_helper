@@ -11,6 +11,8 @@ import java.security.NoSuchAlgorithmException;
 
 import java.util.Map;
 
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLSession;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLContext;
@@ -62,6 +64,13 @@ class WebServiceClientInitializationHandler extends CustomHttpHandler
         null);
     
     HttpsURLConnection.setDefaultSSLSocketFactory(context.getSocketFactory());
+    HttpsURLConnection.setDefaultHostnameVerifier(new HostnameVerifier()  
+        {        
+            public boolean verify(String hostname, SSLSession session)  
+            {  
+                return true;  
+            }  
+        });
   }
   
   private TrustManager[] createTrustManagers(String trustStoreFile, String trustStorePassword)

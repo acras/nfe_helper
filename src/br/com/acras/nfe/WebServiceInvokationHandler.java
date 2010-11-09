@@ -4,6 +4,7 @@ import java.net.SocketTimeoutException;
 
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.IOException;
 import java.io.File;
 
@@ -57,9 +58,7 @@ class WebServiceInvokationHandler extends CustomHttpHandler
     ctxt.put(BindingProvider.SOAPACTION_USE_PROPERTY, true);
     ctxt.put(BindingProvider.SOAPACTION_URI_PROPERTY, namespace + operationName);
 
-    String response = invokeService(dispatch, exchange.getInputStream());
-    
-    exchange.getPrintStream().println(response);
+    invokeService(dispatch, exchange.getInputStream(), exchange.getPrintStream());
   }
   
   protected String getAllowedMethod()
@@ -67,21 +66,23 @@ class WebServiceInvokationHandler extends CustomHttpHandler
     return "POST";
   }
   
-  private String invokeService(Dispatch<SOAPMessage> dispatch,
-      InputStream httpBody) throws Exception
+  private void invokeService(Dispatch<SOAPMessage> dispatch,
+      InputStream inputBody, OutputStream outputBody) throws Exception
   {
     MessageFactory mf = MessageFactory.newInstance(SOAPConstants.SOAP_1_1_PROTOCOL);
     
     SOAPMessage request = mf.createMessage();
     SOAPBody requestBody = request.getSOAPPart().getEnvelope().getBody();
     
-    Document doc = readDocument(httpBody);
+    Document doc = readDocument(inputBody);
 
     requestBody.addDocument(doc);
     request.saveChanges();
     
+    // DEBUG
     request.writeTo(System.out);
     System.out.println("****");
+    // /DEBUG
     
     SOAPMessage response;
     try
@@ -103,21 +104,7 @@ class WebServiceInvokationHandler extends CustomHttpHandler
     Node responseBody = response.getSOAPBody();
     
     Node responseNode = responseBody.getFirstChild();
-    // Removi a validação de namespace da resposta para simplificar a interface deste método e
-    // porque não parecia muito importante
-    if (responseNode == null || responseNode.getNodeType() != Node.ELEMENT_NODE)
-      throwInvalidResponse(responseNode);
-
-    Node resultNode = responseNode.getFirstChild();
-    if (resultNode == null || resultNode.getNodeType() != Node.ELEMENT_NODE)
-      throwInvalidResponse(responseNode);
- 
-    String result = getNodeText(resultNode);
-    
-    if (result.isEmpty())
-      throwInvalidResponse(responseNode);
-    
-    return result;
+    writeDocument(responseNode, outputBody);
   }
   
   private Document readDocument(InputStream parameters) throws Exception
@@ -138,29 +125,12 @@ class WebServiceInvokationHandler extends CustomHttpHandler
     return doc;
   }
   
-  private void throwInvalidResponse(Node responseNode) throws Exception
+  private void writeDocument(Node node, OutputStream output)
+      throws TransformerConfigurationException, TransformerException
   {
-    ByteArrayOutputStream os = new ByteArrayOutputStream();
-    if (responseNode != null)
-    {
-      TransformerFactory tf = TransformerFactory.newInstance();
-      tf.newTransformer().transform(new DOMSource(responseNode), new StreamResult(os));
-    }
-    throw new BadGatewayException("Invalid response:\n" + os.toString());
-  }
-  
-  private String getNodeText(Node node)
-  {
-    String result = "";
-    
-    Node textNode = node.getFirstChild();
-    while (textNode != null)
-    {
-      if (textNode.getNodeType() == Node.TEXT_NODE)
-        result += textNode.getNodeValue();
-      textNode = textNode.getNextSibling();
-    }
-    
-    return result;
+    TransformerFactory tf = TransformerFactory.newInstance();
+    tf.newTransformer().transform(
+        new DOMSource(node),
+        new StreamResult(output));
   }
 }

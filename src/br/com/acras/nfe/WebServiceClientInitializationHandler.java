@@ -19,6 +19,10 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 
+import java.security.cert.Certificate;
+import java.security.cert.X509Certificate;
+
+
 import br.com.acras.utils.GenericEncryption;
 import br.com.acras.utils.GenericEncryptionException;
 
@@ -66,10 +70,31 @@ class WebServiceClientInitializationHandler extends CustomHttpHandler
     HttpsURLConnection.setDefaultSSLSocketFactory(context.getSocketFactory());
     HttpsURLConnection.setDefaultHostnameVerifier(new HostnameVerifier()  
         {        
-            public boolean verify(String hostname, SSLSession session)  
-            {  
-                return true;  
-            }  
+          public boolean verify(String hostname, SSLSession session)  
+          {
+            System.out.println("== verify start");
+            System.out.println(hostname);
+            System.out.println(session.getPeerHost());
+            try
+            {
+              Certificate[] certs = session.getPeerCertificates();
+              for (int i = 0; i < certs.length; i++)
+              {
+                Certificate cert = certs[i];
+                if (cert instanceof X509Certificate)
+                {
+                  X509Certificate x509 = (X509Certificate) cert;
+                  System.out.println(x509.getSubjectX500Principal().getName());
+                }
+              }
+            }
+            catch (Exception e)
+            {
+              e.printStackTrace(System.out);              
+            }
+            System.out.println("== verify end");
+            return true;  
+          }  
         });
   }
   

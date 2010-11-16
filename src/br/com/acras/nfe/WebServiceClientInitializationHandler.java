@@ -19,10 +19,6 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 
-import java.security.cert.Certificate;
-import java.security.cert.X509Certificate;
-
-
 import br.com.acras.utils.GenericEncryption;
 import br.com.acras.utils.GenericEncryptionException;
 
@@ -30,12 +26,14 @@ class WebServiceClientInitializationHandler extends CustomHttpHandler
 {
   String baseDirectory;
   Map<String, KeyEntryReference> keyEntryMap;
+  boolean enableSSLChecks;
   
   public WebServiceClientInitializationHandler(String baseDirectory,
-      Map<String, KeyEntryReference> keyEntryMap)
+      Map<String, KeyEntryReference> keyEntryMap, boolean enableSSLChecks)
   {
     this.baseDirectory = baseDirectory;
     this.keyEntryMap = keyEntryMap;
+    this.enableSSLChecks = enableSSLChecks;
   }
   
   protected void handle(CustomHttpExchange exchange) throws Exception
@@ -68,34 +66,18 @@ class WebServiceClientInitializationHandler extends CustomHttpHandler
         null);
     
     HttpsURLConnection.setDefaultSSLSocketFactory(context.getSocketFactory());
-    HttpsURLConnection.setDefaultHostnameVerifier(new HostnameVerifier()  
-        {        
-          public boolean verify(String hostname, SSLSession session)  
-          {
-            System.out.println("== verify start");
-            System.out.println(hostname);
-            System.out.println(session.getPeerHost());
-            try
+    
+    if (!enableSSLChecks)
+    {
+      HttpsURLConnection.setDefaultHostnameVerifier(new HostnameVerifier()  
+          {        
+            public boolean verify(String hostname, SSLSession session)  
             {
-              Certificate[] certs = session.getPeerCertificates();
-              for (int i = 0; i < certs.length; i++)
-              {
-                Certificate cert = certs[i];
-                if (cert instanceof X509Certificate)
-                {
-                  X509Certificate x509 = (X509Certificate) cert;
-                  System.out.println(x509.getSubjectX500Principal().getName());
-                }
-              }
-            }
-            catch (Exception e)
-            {
-              e.printStackTrace(System.out);              
-            }
-            System.out.println("== verify end");
-            return true;  
-          }  
-        });
+              System.err.printf("=> WARNING: skipping SSL validation for host %s.\n", hostname); 
+              return true;  
+            }  
+          });
+    }
   }
   
   private TrustManager[] createTrustManagers(String trustStoreFile, String trustStorePassword)

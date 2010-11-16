@@ -53,12 +53,25 @@ class WebServiceInvokationHandler extends CustomHttpHandler
     
     Dispatch<SOAPMessage> dispatch =
         service.createDispatch(portQN, SOAPMessage.class, Service.Mode.MESSAGE);
-        
+
     Map<String, Object> ctxt = ((BindingProvider) dispatch).getRequestContext();
+
     ctxt.put(BindingProvider.SOAPACTION_USE_PROPERTY, true);
-    ctxt.put(BindingProvider.SOAPACTION_URI_PROPERTY, namespace + operationName);
+    ctxt.put(BindingProvider.SOAPACTION_URI_PROPERTY,
+        includeTrailingPathDelimiter(namespace) + operationName);
 
     invokeService(dispatch, exchange.getInputStream(), exchange.getPrintStream());
+  }
+  
+  private String includeTrailingPathDelimiter(String p)
+  {
+    String result = p;
+    int len = p.length();
+    
+    if (len > 0 && p.charAt(len - 1) != '/')
+      result += "/";
+    
+    return result;
   }
   
   protected String getAllowedMethod()
@@ -78,11 +91,6 @@ class WebServiceInvokationHandler extends CustomHttpHandler
 
     requestBody.addDocument(doc);
     request.saveChanges();
-    
-    // DEBUG
-    request.writeTo(System.out);
-    System.out.println("****");
-    // /DEBUG
     
     SOAPMessage response;
     try

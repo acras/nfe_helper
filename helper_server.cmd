@@ -1,1 +1,1 @@
-@java -cp %~dp0dist\acras.jar br.com.acras.nfe.HelperServer
+@java -cp %~dp0dist\acras.jar br.com.acras.nfe.HelperServer %*

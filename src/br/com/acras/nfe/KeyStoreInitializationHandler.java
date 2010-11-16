@@ -46,8 +46,6 @@ class KeyStoreInitializationHandler extends CustomHttpHandler
     KeyStoreManager ksm = KeyStoreManager.createKeyStoreManager(
         paramKSType, paramKSFile, paramKSPassword, paramKEAlias, paramKEPassword);
     
-    ksm.validateParams();
-    
     exchange.addHeader(mapEntryHeader, initKeyStore(ksm));
   }
 
@@ -120,6 +118,8 @@ abstract class KeyStoreManager
     this.paramKSPassword = paramKSPassword;
     this.paramKEAlias = paramKEAlias;
     this.paramKEPassword = paramKEPassword;
+    
+    validateParams();
     
     keyStore = loadKeyStore();
   }

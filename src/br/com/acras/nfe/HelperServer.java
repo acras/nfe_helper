@@ -22,6 +22,7 @@ public class HelperServer
   int port = 0;
   boolean enableSSLChecks = true;
   String baseDirectory = ".";
+  String pkcs11Config = null;
   HttpServer httpServer = null;
   
   /**
@@ -56,6 +57,11 @@ public class HelperServer
       else if (args[k].equals("-w") && k + 1 < cnt)
       {
         this.baseDirectory = args[k + 1];
+        k += 2;
+      }
+      else if (args[k].equals("--pkcs11") && k + 1 < cnt)
+      {
+        this.pkcs11Config = args[k + 1];
         k += 2;
       }
       else if (args[k].equals("--disable-ssl-checks"))
@@ -140,8 +146,9 @@ public class HelperServer
   
   private static void showUsage()
   {
-    System.err.println(
-        "Usage: java HelperServer [-p <port>] [-w <working dir>] [--disable-ssl-checks]");
+    System.err.println("Usage:");
+    System.err.println("  java HelperServer [-p <port>] [-w <working dir>]");
+    System.err.println("      [--pkcs11 <PKCS11 config file>] [--disable-ssl-checks]");
     System.exit(2);
   }
   
@@ -171,18 +178,12 @@ public class HelperServer
       System.setProperty(readTimeoutProp, "30000");
   }
   
-  private static void configPKCS11()
+  private void configPKCS11()
   {
-    // Se existe um arquivo de configuração lib/certificates/pkcs11.cfg
-    // adicionamos um provider apropriado
-    String path = "lib" + File.separator + "certificates" +
-        File.separator + "pkcs11.cfg";
-    if ((new File(path)).exists())
+    if (pkcs11Config != null)
     {
-      System.err.println("=> Found config file " + path + ". Adding PKCS11 provider...");
-      Provider provider = new sun.security.pkcs11.SunPKCS11(path);
+      Provider provider = new sun.security.pkcs11.SunPKCS11(pkcs11Config);
       Security.addProvider(provider);
-      System.err.println("=> Provider registered sucessfully.");
     }
   }
 }

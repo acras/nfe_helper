@@ -12,6 +12,10 @@ import java.util.concurrent.Executors;
 
 import java.net.InetSocketAddress;
 
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLSession;
+import javax.net.ssl.HttpsURLConnection;
+
 import com.sun.net.httpserver.HttpServer;
 
 public class HelperServer
@@ -75,6 +79,7 @@ public class HelperServer
     
     configTimeouts();
     configPKCS11();
+    configSSLChecks();
   }
   
   public void start() throws Exception
@@ -96,8 +101,7 @@ public class HelperServer
           new SignHandler(keyEntryMap));
       this.httpServer.createContext(
           "/initwsclient",
-          new WebServiceClientInitializationHandler(
-              baseDirectory, keyEntryMap, this.enableSSLChecks));
+          new WebServiceClientInitializationHandler(baseDirectory, keyEntryMap));
       this.httpServer.createContext(
           "/invokews",
           new WebServiceInvokationHandler());
@@ -185,5 +189,20 @@ public class HelperServer
       Provider provider = new sun.security.pkcs11.SunPKCS11(pkcs11Config);
       Security.addProvider(provider);
     }
+  }
+  
+  private void configSSLChecks()
+  {
+    if (!enableSSLChecks)
+    {
+      HttpsURLConnection.setDefaultHostnameVerifier(new HostnameVerifier()  
+          {        
+            public boolean verify(String hostname, SSLSession session)  
+            {
+              System.err.printf("=> WARNING: skipping SSL validation for host %s.\n", hostname); 
+              return true;  
+            }  
+          });
+    }    
   }
 }

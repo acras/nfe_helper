@@ -100,11 +100,8 @@ public class HelperServer
           "/sign",
           new SignHandler(keyEntryMap));
       this.httpServer.createContext(
-          "/initwsclient",
-          new WebServiceClientInitializationHandler(baseDirectory, keyEntryMap));
-      this.httpServer.createContext(
           "/invokews",
-          new WebServiceInvokationHandler());
+          new WebServiceInvokationHandler(keyEntryMap));
       
       this.httpServer.setExecutor(Executors.newFixedThreadPool(10));
       this.httpServer.start();

@@ -8,7 +8,13 @@ import java.io.OutputStream;
 import java.io.IOException;
 import java.io.File;
 
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+
 import java.util.Map;
+
+import javax.net.ssl.KeyManager;
+import javax.net.ssl.SSLContext;
 
 import javax.xml.namespace.QName;
 import javax.xml.parsers.DocumentBuilder;
@@ -38,8 +44,17 @@ import org.xml.sax.SAXException;
 
 class WebServiceInvokationHandler extends CustomHttpHandler
 {
+  Map<String, KeyEntryReference> keyEntryMap;
+  
+  public WebServiceInvokationHandler(Map<String, KeyEntryReference> keyEntryMap)
+  {
+    this.keyEntryMap = keyEntryMap;
+  }
+  
   protected void handle(CustomHttpExchange exchange) throws Exception
   {
+    SSLContext sslContext = getSSLContext(exchange.getParameter("keystoreid"));
+
     String endpointURL = exchange.getParameter("endpointurl");
     String namespace = exchange.getParameter("namespace");
     String serviceName = exchange.getParameter("servicename");
@@ -56,9 +71,12 @@ class WebServiceInvokationHandler extends CustomHttpHandler
 
     Map<String, Object> ctxt = ((BindingProvider) dispatch).getRequestContext();
 
-    ctxt.put(BindingProvider.SOAPACTION_USE_PROPERTY, true);
+    ctxt.put(BindingProvider.SOAPACTION_USE_PROPERTY,
+        true);
     ctxt.put(BindingProvider.SOAPACTION_URI_PROPERTY,
         includeTrailingPathDelimiter(namespace) + operationName);
+    ctxt.put("com.sun.xml.internal.ws.transport.https.client.SSLSocketFactory",
+        sslContext.getSocketFactory());
 
     invokeService(dispatch, exchange.getInputStream(), exchange.getPrintStream());
   }
@@ -140,5 +158,26 @@ class WebServiceInvokationHandler extends CustomHttpHandler
     tf.newTransformer().transform(
         new DOMSource(node),
         new StreamResult(output));
+  }
+  
+  private SSLContext getSSLContext(String keyStoreId) throws NotFoundException,
+      KeyManagementException, NoSuchAlgorithmException
+  {
+    KeyEntryReference keRef = keyEntryMap.get(keyStoreId);
+    if (keRef == null)
+      throw new NotFoundException("No key entry with id " + keyStoreId +
+          " was found (not initialized?)");
+      
+    SSLContext context = SSLContext.getInstance("SSL");
+    context.init(createKeyManagers(keRef), null, null);
+   
+    return context;
+  }
+
+  private KeyManager[] createKeyManagers(KeyEntryReference keRef)
+  {
+    CustomKeyManager keyManager =
+        new CustomKeyManager(null, keRef.getKeyStore(), keRef.getAlias(), keRef.getKeyEntry());
+    return new KeyManager[] { keyManager };
   }
 }

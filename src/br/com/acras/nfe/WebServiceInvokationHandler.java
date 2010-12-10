@@ -4,10 +4,17 @@ import java.net.SocketTimeoutException;
 
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.IOException;
 import java.io.File;
 
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+
 import java.util.Map;
+
+import javax.net.ssl.KeyManager;
+import javax.net.ssl.SSLContext;
 
 import javax.xml.namespace.QName;
 import javax.xml.parsers.DocumentBuilder;
@@ -37,8 +44,17 @@ import org.xml.sax.SAXException;
 
 class WebServiceInvokationHandler extends CustomHttpHandler
 {
+  Map<String, KeyEntryReference> keyEntryMap;
+  
+  public WebServiceInvokationHandler(Map<String, KeyEntryReference> keyEntryMap)
+  {
+    this.keyEntryMap = keyEntryMap;
+  }
+  
   protected void handle(CustomHttpExchange exchange) throws Exception
   {
+    SSLContext sslContext = getSSLContext(exchange.getParameter("keystoreid"));
+
     String endpointURL = exchange.getParameter("endpointurl");
     String namespace = exchange.getParameter("namespace");
     String serviceName = exchange.getParameter("servicename");
@@ -52,15 +68,28 @@ class WebServiceInvokationHandler extends CustomHttpHandler
     
     Dispatch<SOAPMessage> dispatch =
         service.createDispatch(portQN, SOAPMessage.class, Service.Mode.MESSAGE);
-        
-    Map<String, Object> ctxt = ((BindingProvider) dispatch).getRequestContext();
-    ctxt.put(BindingProvider.SOAPACTION_USE_PROPERTY, true);
-    ctxt.put(BindingProvider.SOAPACTION_URI_PROPERTY, namespace + "/" + operationName);
 
-    String response = invokeService(
-        dispatch, namespace, operationName, exchange.getInputStream());
+    Map<String, Object> ctxt = ((BindingProvider) dispatch).getRequestContext();
+
+    ctxt.put(BindingProvider.SOAPACTION_USE_PROPERTY,
+        true);
+    ctxt.put(BindingProvider.SOAPACTION_URI_PROPERTY,
+        includeTrailingPathDelimiter(namespace) + operationName);
+    ctxt.put("com.sun.xml.internal.ws.transport.https.client.SSLSocketFactory",
+        sslContext.getSocketFactory());
+
+    invokeService(dispatch, exchange.getInputStream(), exchange.getPrintStream());
+  }
+  
+  private String includeTrailingPathDelimiter(String p)
+  {
+    String result = p;
+    int len = p.length();
     
-    exchange.getPrintStream().println(response);
+    if (len > 0 && p.charAt(len - 1) != '/')
+      result += "/";
+    
+    return result;
   }
   
   protected String getAllowedMethod()
@@ -68,23 +97,17 @@ class WebServiceInvokationHandler extends CustomHttpHandler
     return "POST";
   }
   
-  private String invokeService(Dispatch<SOAPMessage> dispatch, String namespace,
-      String operationName, InputStream httpBody) throws Exception
+  private void invokeService(Dispatch<SOAPMessage> dispatch,
+      InputStream inputBody, OutputStream outputBody) throws Exception
   {
     MessageFactory mf = MessageFactory.newInstance(SOAPConstants.SOAP_1_1_PROTOCOL);
     
     SOAPMessage request = mf.createMessage();
     SOAPBody requestBody = request.getSOAPPart().getEnvelope().getBody();
     
-    String[] params = readParameters(httpBody);
-    String header = params[0];
-    String data = params[1];
+    Document doc = readDocument(inputBody);
 
-    SOAPElement operation = requestBody.addChildElement(operationName, "", namespace);
-    SOAPElement headerNode = operation.addChildElement("nfeCabecMsg");
-    headerNode.addTextNode(header);
-    SOAPElement dataNode = operation.addChildElement("nfeDadosMsg");
-    dataNode.addTextNode(data);
+    requestBody.addDocument(doc);
     request.saveChanges();
     
     SOAPMessage response;
@@ -107,24 +130,10 @@ class WebServiceInvokationHandler extends CustomHttpHandler
     Node responseBody = response.getSOAPBody();
     
     Node responseNode = responseBody.getFirstChild();
-    if (responseNode == null ||
-        !responseNode.getNamespaceURI().equals(namespace) ||
-        responseNode.getNodeType() != Node.ELEMENT_NODE)
-      throwInvalidResponse(responseNode);
-
-    Node resultNode = responseNode.getFirstChild();
-    if (resultNode == null || resultNode.getNodeType() != Node.ELEMENT_NODE)
-      throwInvalidResponse(responseNode);
- 
-    String result = getNodeText(resultNode);
-    
-    if (result.isEmpty())
-      throwInvalidResponse(responseNode);
-    
-    return result;
+    writeDocument(responseNode, outputBody);
   }
   
-  private String[] readParameters(InputStream parameters) throws Exception
+  private Document readDocument(InputStream parameters) throws Exception
   {
     DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
     dbf.setNamespaceAware(true);
@@ -136,55 +145,39 @@ class WebServiceInvokationHandler extends CustomHttpHandler
     }
     catch(SAXException e)
     {
-      checkCondition(false);
+      throw new BadRequestException("Parameters in message body are not properly encoded");
     }
 
-    Node rootNode = doc.getDocumentElement();
-    checkCondition(rootNode.getNodeType() == Node.ELEMENT_NODE);
-    Element rootElement = (Element) rootNode;
-    
-    NodeList headerParam = rootElement.getElementsByTagName("headerParam");
-    checkCondition(headerParam.getLength() == 1);
-    NodeList dataParam = rootElement.getElementsByTagName("dataParam");
-    checkCondition(dataParam.getLength() == 1);
-    
-    String headerParamText = getNodeText(headerParam.item(0));
-    checkCondition(!headerParamText.isEmpty());
-    String dataParamText = getNodeText(dataParam.item(0));
-    checkCondition(!dataParamText.isEmpty());
-    
-    return new String[] { headerParamText, dataParamText };
+    return doc;
   }
   
-  private void checkCondition(boolean val) throws BadRequestException
+  private void writeDocument(Node node, OutputStream output)
+      throws TransformerConfigurationException, TransformerException
   {
-    if (!val)
-      throw new BadRequestException("Parameters in message body are not properly encoded");
+    TransformerFactory tf = TransformerFactory.newInstance();
+    tf.newTransformer().transform(
+        new DOMSource(node),
+        new StreamResult(output));
   }
   
-  private void throwInvalidResponse(Node responseNode) throws Exception
+  private SSLContext getSSLContext(String keyStoreId) throws NotFoundException,
+      KeyManagementException, NoSuchAlgorithmException
   {
-    ByteArrayOutputStream os = new ByteArrayOutputStream();
-    if (responseNode != null)
-    {
-      TransformerFactory tf = TransformerFactory.newInstance();
-      tf.newTransformer().transform(new DOMSource(responseNode), new StreamResult(os));
-    }
-    throw new BadGatewayException("Invalid response:\n" + os.toString());
+    KeyEntryReference keRef = keyEntryMap.get(keyStoreId);
+    if (keRef == null)
+      throw new NotFoundException("No key entry with id " + keyStoreId +
+          " was found (not initialized?)");
+      
+    SSLContext context = SSLContext.getInstance("SSL");
+    context.init(createKeyManagers(keRef), null, null);
+   
+    return context;
   }
-  
-  private String getNodeText(Node node)
+
+  private KeyManager[] createKeyManagers(KeyEntryReference keRef)
   {
-    String result = "";
-    
-    Node textNode = node.getFirstChild();
-    while (textNode != null)
-    {
-      if (textNode.getNodeType() == Node.TEXT_NODE)
-        result += textNode.getNodeValue();
-      textNode = textNode.getNextSibling();
-    }
-    
-    return result;
+    CustomKeyManager keyManager =
+        new CustomKeyManager(null, keRef.getKeyStore(), keRef.getAlias(), keRef.getKeyEntry());
+    return new KeyManager[] { keyManager };
   }
 }

@@ -12,6 +12,10 @@ import java.util.concurrent.Executors;
 
 import java.net.InetSocketAddress;
 
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLSession;
+import javax.net.ssl.HttpsURLConnection;
+
 import com.sun.net.httpserver.HttpServer;
 
 public class HelperServer
@@ -20,8 +24,10 @@ public class HelperServer
   private static final String readTimeoutProp = "sun.net.client.defaultReadTimeout";
   
   int port = 0;
+  boolean enableSSLChecks = true;
   String baseDirectory = ".";
-  HttpServer http_server = null;
+  String pkcs11Config = null;
+  HttpServer httpServer = null;
   
   /**
     * Os métodos init(), start(), stop(), destroy() constituem a interface que permite à esta
@@ -57,44 +63,52 @@ public class HelperServer
         this.baseDirectory = args[k + 1];
         k += 2;
       }
+      else if (args[k].equals("--pkcs11") && k + 1 < cnt)
+      {
+        this.pkcs11Config = args[k + 1];
+        k += 2;
+      }
+      else if (args[k].equals("--disable-ssl-checks"))
+      {
+        this.enableSSLChecks = false;
+        k += 1;
+      }
       else
         showUsage();
     }
     
     configTimeouts();
     configPKCS11();
+    configSSLChecks();
   }
   
   public void start() throws Exception
   {
     Map<String, KeyEntryReference> keyEntryMap = new HashMap<String, KeyEntryReference>();
     
-    this.http_server = HttpServer.create(new InetSocketAddress(this.port), 0);
+    this.httpServer = HttpServer.create(new InetSocketAddress(this.port), 0);
 
     try
     {
-      this.http_server.createContext(
+      this.httpServer.createContext(
           "/validate",
           new SchemaValidatorHandler(baseDirectory));
-      this.http_server.createContext(
+      this.httpServer.createContext(
           "/initkeystore",
           new KeyStoreInitializationHandler(baseDirectory, keyEntryMap));
-      this.http_server.createContext(
+      this.httpServer.createContext(
           "/sign",
           new SignHandler(keyEntryMap));
-      this.http_server.createContext(
-          "/initwsclient",
-          new WebServiceClientInitializationHandler(baseDirectory, keyEntryMap));
-      this.http_server.createContext(
+      this.httpServer.createContext(
           "/invokews",
-          new WebServiceInvokationHandler());
+          new WebServiceInvokationHandler(keyEntryMap));
       
-      this.http_server.setExecutor(Executors.newFixedThreadPool(10));
-      this.http_server.start();
+      this.httpServer.setExecutor(Executors.newFixedThreadPool(10));
+      this.httpServer.start();
     }
     catch (Exception e)
     {
-      this.http_server = null;
+      this.httpServer = null;
       throw e;
     }
   }
@@ -103,11 +117,11 @@ public class HelperServer
   {
     try
     {
-      this.http_server.stop(3);
+      this.httpServer.stop(3);
     }
     finally
     {
-      this.http_server = null;
+      this.httpServer = null;
     }
   }
   
@@ -133,7 +147,9 @@ public class HelperServer
   
   private static void showUsage()
   {
-    System.err.println("Usage: java HelperServer [-p <port>] [-w <working dir>]");
+    System.err.println("Usage:");
+    System.err.println("  java HelperServer [-p <port>] [-w <working dir>]");
+    System.err.println("      [--pkcs11 <PKCS11 config file>] [--disable-ssl-checks]");
     System.exit(2);
   }
   
@@ -144,7 +160,7 @@ public class HelperServer
     // esgote o pool e impeça tarefas como validação e assinatura de xmls.
     //
     // No caso do timeout de conexão o valor pode ser bem baixo pois, se a
-    // conexão não foi efetuada sabemos que nenhuma informação chegou à SEFA.
+    // conexão não foi efetuada, sabemos que nenhuma informação chegou à SEFA.
     // Para o timeout de leitura existe esse problema adicional: se o valor
     // for baixo demais aumentará a chance de que, durante uma conexão lenta,
     // um pedido chegue à SEFA mas esta aplicação aborte antes da conexão
@@ -163,18 +179,27 @@ public class HelperServer
       System.setProperty(readTimeoutProp, "30000");
   }
   
-  private static void configPKCS11()
+  private void configPKCS11()
   {
-    // Se existe um arquivo de configuração lib/certificates/pkcs11.cfg
-    // adicionamos um provider apropriado
-    String path = "lib" + File.separator + "certificates" +
-        File.separator + "pkcs11.cfg";
-    if ((new File(path)).exists())
+    if (pkcs11Config != null)
     {
-      System.err.println("=> Found config file " + path + ". Adding PKCS11 provider...");
-      Provider provider = new sun.security.pkcs11.SunPKCS11(path);
+      Provider provider = new sun.security.pkcs11.SunPKCS11(pkcs11Config);
       Security.addProvider(provider);
-      System.err.println("=> Provider registered sucessfully.");
     }
+  }
+  
+  private void configSSLChecks()
+  {
+    if (!enableSSLChecks)
+    {
+      HttpsURLConnection.setDefaultHostnameVerifier(new HostnameVerifier()  
+          {        
+            public boolean verify(String hostname, SSLSession session)  
+            {
+              System.err.printf("=> WARNING: skipping SSL validation for host %s.\n", hostname); 
+              return true;  
+            }  
+          });
+    }    
   }
 }

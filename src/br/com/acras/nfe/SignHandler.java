@@ -134,6 +134,8 @@ class SignHandler extends CustomHttpHandler
         kif.newX509Data(Collections.singletonList(cert))));
   }
   
+  // TODO: readDocument e writeDocument estão parcialmente duplicados em
+  // WebServiceInvokationHandler. Deve-se encontrar um meio de reutilizá-los
   private Document readDocument(InputStream input)
       throws ParserConfigurationException, SAXException, IOException
   {

@@ -11,6 +11,8 @@ import java.security.cert.X509Certificate;
 
 import javax.net.ssl.X509KeyManager;
 
+import br.com.acras.utils.*;
+
 // Descaradamente copiado de http://objectmix.com/java/76407-a.html
 public class CustomKeyManager implements X509KeyManager
 {

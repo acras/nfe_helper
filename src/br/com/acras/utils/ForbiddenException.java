@@ -1,6 +1,6 @@
-package br.com.acras.nfe;
+package br.com.acras.utils;
 
-class ForbiddenException extends HttpException
+public class ForbiddenException extends HttpException
 {
   public ForbiddenException(String message)
   {

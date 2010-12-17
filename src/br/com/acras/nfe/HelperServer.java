@@ -18,6 +18,8 @@ import javax.net.ssl.HttpsURLConnection;
 
 import com.sun.net.httpserver.HttpServer;
 
+import br.com.acras.utils.*;
+
 public class HelperServer
 {
   private static final String connectTimeoutProp = "sun.net.client.defaultConnectTimeout";

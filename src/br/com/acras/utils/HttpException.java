@@ -1,6 +1,6 @@
-package br.com.acras.nfe;
+package br.com.acras.utils;
 
-abstract class HttpException extends Exception
+abstract public class HttpException extends Exception
 {
   public HttpException(String message)
   {

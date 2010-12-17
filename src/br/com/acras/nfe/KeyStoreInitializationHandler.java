@@ -15,8 +15,7 @@ import java.security.UnrecoverableKeyException;
 
 import com.sun.net.httpserver.HttpExchange;
 
-import br.com.acras.utils.GenericEncryption;
-import br.com.acras.utils.GenericEncryptionException;
+import br.com.acras.utils.*;
 
 class KeyStoreInitializationHandler extends CustomHttpHandler
 {

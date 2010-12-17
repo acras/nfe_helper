@@ -1,4 +1,4 @@
-package br.com.acras.nfe;
+package br.com.acras.utils;
 
 import java.io.IOException;
 
@@ -7,7 +7,7 @@ import java.util.Date;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 
-abstract class CustomHttpHandler implements HttpHandler
+abstract public class CustomHttpHandler implements HttpHandler
 {
   public void handle(HttpExchange t) throws IOException
   {

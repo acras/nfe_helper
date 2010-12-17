@@ -1,6 +1,6 @@
-package br.com.acras.nfe;
+package br.com.acras.utils;
 
-class BadGatewayException extends HttpException
+public class BadGatewayException extends HttpException
 {
   public BadGatewayException(String message)
   {

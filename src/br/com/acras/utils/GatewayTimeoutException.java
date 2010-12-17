@@ -1,6 +1,6 @@
-package br.com.acras.nfe;
+package br.com.acras.utils;
 
-class GatewayTimeoutException extends HttpException
+public class GatewayTimeoutException extends HttpException
 {
   public GatewayTimeoutException(String message)
   {

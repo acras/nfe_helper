@@ -43,6 +43,8 @@ import org.xml.sax.SAXException;
 
 import org.w3c.dom.Document;
 
+import br.com.acras.utils.*;
+
 class SignHandler extends CustomHttpHandler
 {
   Map<String, KeyEntryReference> keyEntryMap;

@@ -1,6 +1,6 @@
-package br.com.acras.nfe;
+package br.com.acras.utils;
 
-class BadRequestException extends HttpException
+public class BadRequestException extends HttpException
 {
   public BadRequestException(String message)
   {

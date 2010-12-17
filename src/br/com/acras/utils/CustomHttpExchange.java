@@ -1,4 +1,4 @@
-package br.com.acras.nfe;
+package br.com.acras.utils;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -70,6 +70,11 @@ public class CustomHttpExchange
     if (result == null)
       throw new BadRequestException("Missing parameter: " + name);
     return result;
+  }
+  
+  public Map<String, String> getParameters()
+  {
+    return parameters;
   }
   
   public void addHeader(String key, String value)

@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.concurrent.Executors;
 
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 
 import javax.net.ssl.HostnameVerifier;
@@ -88,7 +89,8 @@ public class HelperServer
   {
     Map<String, KeyEntryReference> keyEntryMap = new HashMap<String, KeyEntryReference>();
     
-    this.httpServer = HttpServer.create(new InetSocketAddress(this.port), 0);
+    this.httpServer = HttpServer.create(
+        new InetSocketAddress("127.0.0.1", this.port), 0);
 
     try
     {

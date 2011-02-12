@@ -49,7 +49,8 @@ public class JasperServer
   
   public void start() throws Exception
   {
-    this.httpServer = HttpServer.create(new InetSocketAddress(this.port), 0);
+    this.httpServer = HttpServer.create(
+        new InetSocketAddress("127.0.0.1", this.port), 0);
 
     try
     {

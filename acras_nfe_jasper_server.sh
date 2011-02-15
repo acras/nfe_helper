@@ -15,7 +15,7 @@ JSVC_USER=romulo
 VERBOSE=
 
 JAVA_HOME=/usr/lib/jvm/java-6-openjdk/jre
-JSVC_CP=../jasper_libs/barbecue-1.1.jar:../jasper_libs/commons-beanutils-1.7.jar./jasper_libs/commons-collections-2.1.jar:../jasper_libs/commons-logging-1.0.2.jar:../jasper_libs/iReport.jar:../jasper_libs/itext-1.3.1.jar:../jasper_libs/jasperreports-3.0.0.jar:../jasper_libs/xalan.jar:$HELPER_DIR/acras.jar:$HELPER_DIR/acras-report.jar:app/reports
+JSVC_CP=/usr/share/java/commons-daemon.jar:$NFE_DIR/../jasper_libs/barbecue-1.1.jar:$NFE_DIR/../jasper_libs/commons-beanutils-1.7.jar:$NFE_DIR/../jasper_libs/commons-collections-2.1.jar:$NFE_DIR/../jasper_libs/commons-logging-1.0.2.jar:$NFE_DIR/../jasper_libs/iReport.jar:$NFE_DIR/../jasper_libs/itext-1.3.1.jar:$NFE_DIR/../jasper_libs/jasperreports-3.0.0.jar:$NFE_DIR/../jasper_libs/xalan.jar:$HELPER_DIR/acras.jar:$HELPER_DIR/acras-report.jar:$NFE_DIR/app/reports
 
 LOG_FILE=${HELPER_DIR}/jasper_server.log
 PID_FILE=${HELPER_DIR}/jasper_server.pid

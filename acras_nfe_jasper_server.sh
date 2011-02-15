@@ -9,9 +9,9 @@
 # Short-Description:    Acras NF-e Jasper Server
 ### END INIT INFO
 
-HELPER_DIR=/home/romulo/projects/java/dist
-NFE_DIR=/home/romulo
-JSVC_USER=romulo
+HELPER_DIR=/usr/servicos/nfe/helper_server
+NFE_DIR=/usr/servicos/nfe/acras_nfe
+JSVC_USER=acras_nfe
 VERBOSE=
 
 JAVA_HOME=/usr/lib/jvm/java-6-openjdk/jre
@@ -24,9 +24,9 @@ JSVC_ARGS="-p 9981"
 
 do_start()
 {
-  chdir $NFE_DIR
+  cd $NFE_DIR
   LANG=pt_BR.UTF-8 jsvc $VERBOSE -home $JAVA_HOME -user $JSVC_USER -outfile $LOG_FILE -errfile '&1' -pidfile $PID_FILE -cp $JSVC_CP $JSVC_CLASS $JSVC_ARGS
-  chdir -
+  cd -
 }
 
 do_stop()

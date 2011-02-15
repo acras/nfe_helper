@@ -15,7 +15,7 @@ JSVC_USER=romulo
 VERBOSE=
 
 JAVA_HOME=/usr/lib/jvm/java-6-openjdk/jre
-JSVC_CP=../jasper_libs/barbecue-1.1.jar:../jasper_libs/commons-beanutils-1.7.jar./jasper_libs/commons-collections-2.1.jar:../jasper_libs/commons-logging-1.0.2.jar:../jasper_libs/iReport.jar:../jasper_libs/itext-1.3.1.jar:../jasper_libs/jasperreports-3.0.0.jar:../jasper_libs/xalan.jar:../java/acras.jar:../java/acras-report.jar:app/reports
+JSVC_CP=../jasper_libs/barbecue-1.1.jar:../jasper_libs/commons-beanutils-1.7.jar./jasper_libs/commons-collections-2.1.jar:../jasper_libs/commons-logging-1.0.2.jar:../jasper_libs/iReport.jar:../jasper_libs/itext-1.3.1.jar:../jasper_libs/jasperreports-3.0.0.jar:../jasper_libs/xalan.jar:$HELPER_DIR/acras.jar:$HELPER_DIR/acras-report.jar:app/reports
 
 LOG_FILE=${HELPER_DIR}/jasper_server.log
 PID_FILE=${HELPER_DIR}/jasper_server.pid
@@ -24,16 +24,14 @@ JSVC_ARGS="-p 9981"
 
 do_start()
 {
-  chdir $HELPER_DIR
+  chdir $NFE_DIR
   LANG=pt_BR.UTF-8 jsvc $VERBOSE -home $JAVA_HOME -user $JSVC_USER -outfile $LOG_FILE -errfile '&1' -pidfile $PID_FILE -cp $JSVC_CP $JSVC_CLASS $JSVC_ARGS
   chdir -
 }
 
 do_stop()
 {
-  chdir $HELPER_DIR
   LANG=pt_BR.UTF-8 jsvc $VERBOSE -home $JAVA_HOME -user $JSVC_USER -stop -pidfile $PID_FILE -cp $JSVC_CP $JSVC_CLASS
-  chdir -
 }
 
 case "$1" in

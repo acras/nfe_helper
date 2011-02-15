@@ -26,7 +26,7 @@ do_start()
 {
   cd $NFE_DIR
   LANG=pt_BR.UTF-8 jsvc $VERBOSE -home $JAVA_HOME -user $JSVC_USER -outfile $LOG_FILE -errfile '&1' -pidfile $PID_FILE -cp $JSVC_CP $JSVC_CLASS $JSVC_ARGS
-  cd -
+  cd - >/dev/null
 }
 
 do_stop()

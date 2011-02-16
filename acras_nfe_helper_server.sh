@@ -19,12 +19,13 @@ JSVC_CP=/usr/share/java/commons-daemon.jar:${HELPER_DIR}/acras.jar
 
 LOG_FILE=${HELPER_DIR}/jsvc.log
 PID_FILE=${HELPER_DIR}/jsvc.pid
+JSVC_DEFS="-Djavax.net.ssl.trustStore=${NFE_DIR}/lib/certificates/trusted.jks -Djavax.net.ssl.trustStorePassword=acrasnfe"
 JSVC_CLASS=br.com.acras.nfe.HelperServer
 JSVC_ARGS="-w ${NFE_DIR}"
 
 do_start()
 {
-  LANG=pt_BR.UTF-8 jsvc $VERBOSE -home $JAVA_HOME -user $JSVC_USER -outfile $LOG_FILE -errfile '&1' -pidfile $PID_FILE -cp $JSVC_CP $JSVC_CLASS $JSVC_ARGS
+  LANG=pt_BR.UTF-8 jsvc $VERBOSE -home $JAVA_HOME -user $JSVC_USER -outfile $LOG_FILE -errfile '&1' -pidfile $PID_FILE $JSVC_DEFS -cp $JSVC_CP $JSVC_CLASS $JSVC_ARGS
 }
 
 do_stop()

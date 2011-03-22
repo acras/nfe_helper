@@ -2,11 +2,8 @@ package br.com.acras.nfe;
 
 import java.net.SocketTimeoutException;
 
-import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.IOException;
-import java.io.File;
 
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
@@ -17,30 +14,15 @@ import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLContext;
 
 import javax.xml.namespace.QName;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.soap.MessageFactory;
-import javax.xml.soap.SOAPBody;
+import javax.xml.soap.MimeHeaders;
 import javax.xml.soap.SOAPConstants;
-import javax.xml.soap.SOAPElement;
-import javax.xml.soap.SOAPException;
 import javax.xml.soap.SOAPMessage;
-import javax.xml.transform.TransformerConfigurationException;
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
 import javax.xml.ws.BindingProvider;
 import javax.xml.ws.Dispatch;
 import javax.xml.ws.Service;
 import javax.xml.ws.WebServiceException;
 import javax.xml.ws.soap.SOAPBinding;
-
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-import org.xml.sax.SAXException;
 
 import br.com.acras.utils.*;
 
@@ -61,18 +43,29 @@ class WebServiceInvokationHandler extends CustomHttpHandler
     String namespace = exchange.getParameter("namespace");
     String serviceName = exchange.getParameter("servicename");
     String operationName = exchange.getParameter("operationname");
+    String soapVersion = exchange.tryParameter("soapversion");
 
     QName serviceQN = new QName(namespace, serviceName);
     QName portQN = new QName(namespace, serviceName + "Port");
+    
+    String soapBinding = SOAPBinding.SOAP11HTTP_BINDING;
+    String soapProtocol = SOAPConstants.SOAP_1_1_PROTOCOL;
+    String contentType = "text/xml; charset=utf-8";
+    if ("12".equals(soapVersion))
+    {
+      soapBinding = SOAPBinding.SOAP12HTTP_BINDING;
+      soapProtocol = SOAPConstants.SOAP_1_2_PROTOCOL;
+      contentType = "application/soap+xml; charset=utf-8";
+    }
 
     Service service = Service.create(serviceQN);
-    service.addPort(portQN, SOAPBinding.SOAP11HTTP_BINDING, endpointURL);
+    service.addPort(portQN, soapBinding, endpointURL);
     
     Dispatch<SOAPMessage> dispatch =
         service.createDispatch(portQN, SOAPMessage.class, Service.Mode.MESSAGE);
 
     Map<String, Object> ctxt = ((BindingProvider) dispatch).getRequestContext();
-
+    
     ctxt.put(BindingProvider.SOAPACTION_USE_PROPERTY,
         true);
     ctxt.put(BindingProvider.SOAPACTION_URI_PROPERTY,
@@ -80,7 +73,8 @@ class WebServiceInvokationHandler extends CustomHttpHandler
     ctxt.put("com.sun.xml.internal.ws.transport.https.client.SSLSocketFactory",
         sslContext.getSocketFactory());
 
-    invokeService(dispatch, exchange.getInputStream(), exchange.getPrintStream());
+    invokeService(dispatch, soapProtocol, contentType,
+        exchange.getInputStream(), exchange.getPrintStream());
   }
   
   private String includeTrailingPathDelimiter(String p)
@@ -99,20 +93,17 @@ class WebServiceInvokationHandler extends CustomHttpHandler
     return "POST";
   }
   
-  private void invokeService(Dispatch<SOAPMessage> dispatch,
-      InputStream inputBody, OutputStream outputBody) throws Exception
+  private void invokeService(Dispatch<SOAPMessage> dispatch, String protocol,
+      String contentType, InputStream inputBody, OutputStream outputBody) throws Exception
   {
-    MessageFactory mf = MessageFactory.newInstance(SOAPConstants.SOAP_1_1_PROTOCOL);
-    
-    SOAPMessage request = mf.createMessage();
-    SOAPBody requestBody = request.getSOAPPart().getEnvelope().getBody();
-    
-    Document doc = readDocument(inputBody);
+    MessageFactory mf = MessageFactory.newInstance(protocol);
 
-    requestBody.addDocument(doc);
-    request.saveChanges();
+    MimeHeaders headers = new MimeHeaders();
+    headers.addHeader("Content-Type", contentType);
     
+    SOAPMessage request = mf.createMessage(headers, inputBody);
     SOAPMessage response;
+
     try
     {
       response = dispatch.invoke(request);
@@ -129,37 +120,7 @@ class WebServiceInvokationHandler extends CustomHttpHandler
       throw new BadGatewayException(e);
     }
     
-    Node responseBody = response.getSOAPBody();
-    
-    Node responseNode = responseBody.getFirstChild();
-    writeDocument(responseNode, outputBody);
-  }
-  
-  private Document readDocument(InputStream parameters) throws Exception
-  {
-    DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-    dbf.setNamespaceAware(true);
-    DocumentBuilder db = dbf.newDocumentBuilder();
-    Document doc = null;
-    try
-    {
-      doc = db.parse(parameters);
-    }
-    catch(SAXException e)
-    {
-      throw new BadRequestException("Parameters in message body are not properly encoded");
-    }
-
-    return doc;
-  }
-  
-  private void writeDocument(Node node, OutputStream output)
-      throws TransformerConfigurationException, TransformerException
-  {
-    TransformerFactory tf = TransformerFactory.newInstance();
-    tf.newTransformer().transform(
-        new DOMSource(node),
-        new StreamResult(output));
+    response.writeTo(outputBody);
   }
   
   private SSLContext getSSLContext(String keyStoreId) throws NotFoundException,

@@ -1,4 +1,4 @@
-package br.com.acras.utils;
+package utils;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -26,7 +26,7 @@ public class CustomHttpExchange
   private PrintStream printStream;
   private Headers headers;
   private Map<String, String> parameters;
-  
+
   public CustomHttpExchange(HttpExchange httpExchange) throws IOException
   {
     this.httpExchange = httpExchange;
@@ -34,11 +34,11 @@ public class CustomHttpExchange
     // responsabilidade das classes derivadas do CustomHttpHandler de ler o RequestBody
     initInputStream();
     initPrintStream();
-    
+
     headers = httpExchange.getResponseHeaders();
     parameters = decodeURIQuery(httpExchange.getRequestURI());
   }
-  
+
   public void checkMethod(String expectedMethod) throws MethodNotAllowedException
   {
     String s = httpExchange.getRequestMethod();
@@ -48,7 +48,7 @@ public class CustomHttpExchange
       throw new MethodNotAllowedException("Method not allowed: " + s);
     }
   }
-  
+
   public void finish(int responseCode) throws IOException
   {
     httpExchange.sendResponseHeaders(responseCode, byteArrayOutputStream.size());
@@ -58,12 +58,12 @@ public class CustomHttpExchange
 
     httpExchange.close();
   }
-  
+
   public String tryParameter(String name)
   {
     return parameters.get(name);
   }
-  
+
   public String getParameter(String name) throws BadRequestException
   {
     String result = tryParameter(name);
@@ -71,31 +71,31 @@ public class CustomHttpExchange
       throw new BadRequestException("Missing parameter: " + name);
     return result;
   }
-  
+
   public Map<String, String> getParameters()
   {
     return parameters;
   }
-  
+
   public void addHeader(String key, String value)
   {
     headers.add(key, value);
   }
-  
+
   public InputStream getInputStream()
   {
     return inputStream;
   }
-  
+
   public PrintStream getPrintStream()
   {
     return printStream;
   }
-  
+
   private void initInputStream() throws IOException
   {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
-    
+
     if (httpExchange.getRequestMethod().equals("POST"))
     {
       InputStream in = httpExchange.getRequestBody();
@@ -116,7 +116,7 @@ public class CustomHttpExchange
       }
     }
 
-    this.inputStream = new ByteArrayInputStream(out.toByteArray());   
+    this.inputStream = new ByteArrayInputStream(out.toByteArray());
   }
 
   private void initPrintStream()
@@ -131,11 +131,11 @@ public class CustomHttpExchange
       throw new RuntimeException(e);
     }
   }
-  
+
   private Map<String, String> decodeURIQuery(URI uri)
   {
     Map<String, String> result = new HashMap<String, String>();
-    
+
     String query = uri.getRawQuery();
     if (query != null)
     {
@@ -144,12 +144,12 @@ public class CustomHttpExchange
         if (!item.isEmpty())
         {
           String paramParts[] = item.split("\\=", 2);
-  
+
           String key = paramParts[0];
           String value = "";
           if (paramParts.length > 1)
-            value = paramParts[1]; 
-  
+            value = paramParts[1];
+
           try
           {
             result.put(URLDecoder.decode(key, "UTF-8"), URLDecoder.decode(value, "UTF-8"));
@@ -160,7 +160,7 @@ public class CustomHttpExchange
           }
         }
     }
-      
+
     return result;
   }
 }

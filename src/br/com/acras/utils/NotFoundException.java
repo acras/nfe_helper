@@ -1,4 +1,4 @@
-package br.com.acras.utils;
+package utils;
 
 public class NotFoundException extends HttpException
 {
@@ -6,12 +6,12 @@ public class NotFoundException extends HttpException
   {
     super(message);
   }
-  
+
   public NotFoundException(Exception exception)
   {
     super(exception);
   }
-  
+
   protected int getResponseCode()
   {
     return 404;

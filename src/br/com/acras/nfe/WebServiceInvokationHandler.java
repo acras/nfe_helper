@@ -1,4 +1,4 @@
-package br.com.acras.nfe;
+package nfe;
 
 import java.net.SocketTimeoutException;
 
@@ -24,17 +24,17 @@ import javax.xml.ws.Service;
 import javax.xml.ws.WebServiceException;
 import javax.xml.ws.soap.SOAPBinding;
 
-import br.com.acras.utils.*;
+import utils.*;
 
 class WebServiceInvokationHandler extends CustomHttpHandler
 {
   Map<String, KeyEntryReference> keyEntryMap;
-  
+
   public WebServiceInvokationHandler(Map<String, KeyEntryReference> keyEntryMap)
   {
     this.keyEntryMap = keyEntryMap;
   }
-  
+
   protected void handle(CustomHttpExchange exchange) throws Exception
   {
     SSLContext sslContext = getSSLContext(exchange.getParameter("keystoreid"));
@@ -47,7 +47,7 @@ class WebServiceInvokationHandler extends CustomHttpHandler
 
     QName serviceQN = new QName(namespace, serviceName);
     QName portQN = new QName(namespace, serviceName + "Port");
-    
+
     String soapBinding = SOAPBinding.SOAP11HTTP_BINDING;
     String soapProtocol = SOAPConstants.SOAP_1_1_PROTOCOL;
     String contentType = "text/xml; charset=utf-8";
@@ -60,12 +60,12 @@ class WebServiceInvokationHandler extends CustomHttpHandler
 
     Service service = Service.create(serviceQN);
     service.addPort(portQN, soapBinding, endpointURL);
-    
+
     Dispatch<SOAPMessage> dispatch =
         service.createDispatch(portQN, SOAPMessage.class, Service.Mode.MESSAGE);
 
     Map<String, Object> ctxt = ((BindingProvider) dispatch).getRequestContext();
-    
+
     ctxt.put(BindingProvider.SOAPACTION_USE_PROPERTY,
         true);
     ctxt.put(BindingProvider.SOAPACTION_URI_PROPERTY,
@@ -76,23 +76,23 @@ class WebServiceInvokationHandler extends CustomHttpHandler
     invokeService(dispatch, soapProtocol, contentType,
         exchange.getInputStream(), exchange.getPrintStream());
   }
-  
+
   private String includeTrailingPathDelimiter(String p)
   {
     String result = p;
     int len = p.length();
-    
+
     if (len > 0 && p.charAt(len - 1) != '/')
       result += "/";
-    
+
     return result;
   }
-  
+
   protected String getAllowedMethod()
   {
     return "POST";
   }
-  
+
   private void invokeService(Dispatch<SOAPMessage> dispatch, String protocol,
       String contentType, InputStream inputBody, OutputStream outputBody) throws Exception
   {
@@ -100,7 +100,7 @@ class WebServiceInvokationHandler extends CustomHttpHandler
 
     MimeHeaders headers = new MimeHeaders();
     headers.addHeader("Content-Type", contentType);
-    
+
     SOAPMessage request = mf.createMessage(headers, inputBody);
     SOAPMessage response;
 
@@ -119,10 +119,10 @@ class WebServiceInvokationHandler extends CustomHttpHandler
 
       throw new BadGatewayException(e);
     }
-    
+
     response.writeTo(outputBody);
   }
-  
+
   private SSLContext getSSLContext(String keyStoreId) throws NotFoundException,
       KeyManagementException, NoSuchAlgorithmException
   {
@@ -130,10 +130,10 @@ class WebServiceInvokationHandler extends CustomHttpHandler
     if (keRef == null)
       throw new NotFoundException("No key entry with id " + keyStoreId +
           " was found (not initialized?)");
-      
+
     SSLContext context = SSLContext.getInstance("SSL");
     context.init(createKeyManagers(keRef), null, null);
-   
+
     return context;
   }
 

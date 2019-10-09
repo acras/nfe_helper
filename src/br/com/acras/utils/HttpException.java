@@ -1,4 +1,4 @@
-package br.com.acras.utils;
+package utils;
 
 abstract public class HttpException extends Exception
 {
@@ -6,7 +6,7 @@ abstract public class HttpException extends Exception
   {
     super(message);
   }
-  
+
   public HttpException(Throwable cause)
   {
     super(cause.getClass().getName() + ": " + cause.getMessage());

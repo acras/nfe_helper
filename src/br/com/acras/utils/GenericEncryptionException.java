@@ -1,4 +1,4 @@
-package br.com.acras.utils;
+package utils;
 
 public class GenericEncryptionException extends Exception
 {

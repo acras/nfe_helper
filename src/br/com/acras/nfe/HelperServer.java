@@ -1,4 +1,4 @@
-package br.com.acras.nfe;
+package nfe;
 
 import java.io.File;
 import java.io.IOException;
@@ -19,19 +19,19 @@ import javax.net.ssl.HttpsURLConnection;
 
 import com.sun.net.httpserver.HttpServer;
 
-import br.com.acras.utils.*;
+import utils.*;
 
 public class HelperServer
 {
   private static final String connectTimeoutProp = "sun.net.client.defaultConnectTimeout";
   private static final String readTimeoutProp = "sun.net.client.defaultReadTimeout";
-  
+
   int port = 0;
   boolean enableSSLChecks = true;
   String baseDirectory = ".";
   String pkcs11Config = null;
   HttpServer httpServer = null;
-  
+
   /**
     * Os métodos init(), start(), stop(), destroy() constituem a interface que permite à esta
     * classe ser lançada pelo jsvc (http://commons.apache.org/daemon/jsvc.html). Estas e o
@@ -43,10 +43,10 @@ public class HelperServer
   {
     this.port = 9990;
     this.baseDirectory = ".";
-    
+
     int k = 0;
     int cnt = args.length;
-    
+
     while (k < cnt)
     {
       if (args[k].equals("-p") && k + 1 < cnt)
@@ -79,16 +79,16 @@ public class HelperServer
       else
         showUsage();
     }
-    
+
     configTimeouts();
     configPKCS11();
     configSSLChecks();
   }
-  
+
   public void start() throws Exception
   {
     Map<String, KeyEntryReference> keyEntryMap = new HashMap<String, KeyEntryReference>();
-    
+
     this.httpServer = HttpServer.create(
         new InetSocketAddress("127.0.0.1", this.port), 0);
 
@@ -106,7 +106,7 @@ public class HelperServer
       this.httpServer.createContext(
           "/invokews",
           new WebServiceInvokationHandler(keyEntryMap));
-      
+
       this.httpServer.setExecutor(Executors.newFixedThreadPool(10));
       this.httpServer.start();
     }
@@ -128,12 +128,12 @@ public class HelperServer
       this.httpServer = null;
     }
   }
-  
+
   public void destroy() throws Exception
   {
-    
+
   }
-  
+
   public static void main(String[] args)
   {
     try
@@ -148,7 +148,7 @@ public class HelperServer
       System.exit(1);
     }
   }
-  
+
   private static void showUsage()
   {
     System.err.println("Usage:");
@@ -156,7 +156,7 @@ public class HelperServer
     System.err.println("      [--pkcs11 <PKCS11 config file>] [--disable-ssl-checks]");
     System.exit(2);
   }
-  
+
   private static void configTimeouts()
   {
     // Se não for especificado vamos definir um timeout razoável para as
@@ -182,7 +182,7 @@ public class HelperServer
     if (null == System.getProperty(readTimeoutProp))
       System.setProperty(readTimeoutProp, "30000");
   }
-  
+
   private void configPKCS11()
   {
     if (pkcs11Config != null)
@@ -191,19 +191,19 @@ public class HelperServer
       Security.addProvider(provider);
     }
   }
-  
+
   private void configSSLChecks()
   {
     if (!enableSSLChecks)
     {
-      HttpsURLConnection.setDefaultHostnameVerifier(new HostnameVerifier()  
-          {        
-            public boolean verify(String hostname, SSLSession session)  
+      HttpsURLConnection.setDefaultHostnameVerifier(new HostnameVerifier()
+          {
+            public boolean verify(String hostname, SSLSession session)
             {
-              System.err.printf("=> WARNING: skipping SSL validation for host %s.\n", hostname); 
-              return true;  
-            }  
+              System.err.printf("=> WARNING: skipping SSL validation for host %s.\n", hostname);
+              return true;
+            }
           });
-    }    
+    }
   }
 }

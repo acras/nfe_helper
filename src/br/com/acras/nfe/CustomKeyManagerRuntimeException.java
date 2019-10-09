@@ -1,9 +1,9 @@
-package br.com.acras.nfe;
+package nfe;
 
 class CustomKeyManagerRuntimeException extends RuntimeException
 {
   public CustomKeyManagerRuntimeException(String message)
   {
-    super(message); 
+    super(message);
   }
 }

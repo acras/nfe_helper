@@ -1,4 +1,4 @@
-package br.com.acras.utils;
+package utils;
 
 public class DecryptString
 {
@@ -9,11 +9,11 @@ public class DecryptString
       System.err.println("Usage: java DecryptString <string to decrypt>");
       System.exit(1);
     }
-    
+
     try
     {
       String str = GenericEncryption.decryptString(args[0]);
-      
+
       System.out.print(str);
       System.out.print(" (");
       System.out.print(str.length());

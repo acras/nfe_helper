@@ -1,4 +1,4 @@
-package br.com.acras.utils;
+package utils;
 
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
@@ -16,30 +16,30 @@ public class GenericEncryption
       -91, 11, 67, -108, -80, -11, -97, 25, -65, 49, 6 };
   private static final byte[] key = new byte[] { 45, 35, 108, 75, 58, 34, -13,
       -66, 95, -71, -14, 69, 57, 23, 41, -118 };
-  private static final String padString = "{pad}"; 
-      
+  private static final String padString = "{pad}";
+
   private static Cipher getAESCipher(int opmode)
       throws NoSuchAlgorithmException, NoSuchPaddingException,
       InvalidKeyException, InvalidAlgorithmParameterException
   {
     SecretKeySpec keySpec = new SecretKeySpec(key, "AES");
     IvParameterSpec ivSpec = new IvParameterSpec(initVector);
-      
+
     Cipher result = Cipher.getInstance("AES/CBC/PKCS5Padding");
     result.init(opmode, keySpec, ivSpec);
-    
+
     return result;
   };
-      
+
   private static void throwInvalidStringError() throws GenericEncryptionException
   {
     throw new GenericEncryptionException("Invalid encrypted string");
   }
-  
+
   public static String decryptString(String str) throws GenericEncryptionException
   {
     byte[] output;
-    
+
     try
     {
       byte[] input = HexString.decode(str);
@@ -50,21 +50,21 @@ public class GenericEncryption
     {
       throw new GenericEncryptionException(e);
     }
-    
+
     String s = new String(output);
     int c = padString.length();
-    
+
     if (s.length() < 2 * c || !s.startsWith(padString) || !s.endsWith(padString))
       throwInvalidStringError();
-    
+
     return s.substring(c, s.length() - c);
   }
-  
+
   public static String encryptString(String str) throws GenericEncryptionException
   {
     byte output[];
     String inputStr = padString + str + padString;
-    
+
     try
     {
       Cipher cipher = getAESCipher(Cipher.ENCRYPT_MODE);
@@ -74,7 +74,7 @@ public class GenericEncryption
     {
       throw new GenericEncryptionException(e);
     }
-    
+
     return HexString.encode(output);
   }
 }

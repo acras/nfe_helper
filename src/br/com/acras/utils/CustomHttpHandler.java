@@ -1,4 +1,4 @@
-package br.com.acras.utils;
+package utils;
 
 import java.io.IOException;
 
@@ -14,14 +14,14 @@ abstract public class CustomHttpHandler implements HttpHandler
     try
     {
       int responseCode = 500;
-      
+
       CustomHttpExchange exchange = new CustomHttpExchange(t);
       try
       {
         long timerBefore = System.nanoTime();
-        
+
         try
-        { 
+        {
           exchange.checkMethod(getAllowedMethod());
           handle(exchange);
           responseCode = 200;
@@ -38,7 +38,7 @@ abstract public class CustomHttpHandler implements HttpHandler
         }
 
         long timerAfter = System.nanoTime();
-        
+
         System.err.print("=> ");
         System.err.print(new Date());
         System.err.print(" | ");
@@ -46,7 +46,7 @@ abstract public class CustomHttpHandler implements HttpHandler
         System.err.print(" | ");
         System.err.printf("%.5f s", (timerAfter - timerBefore) * 1e-9);
         System.err.print(" | ");
-        System.err.print(responseCode);        
+        System.err.print(responseCode);
         System.err.print("\n");
       }
       finally

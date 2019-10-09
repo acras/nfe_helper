@@ -45,30 +45,28 @@ import org.w3c.dom.Document;
 
 import utils.*;
 
-class SignHandler extends CustomHttpHandler
-{
+class SignHandlerAWS {
   Map<String, KeyEntryReference> keyEntryMap;
 
-  public SignHandler(Map<String, KeyEntryReference> keyEntryMap)
+  public SignHandlerAWS(Map<String, KeyEntryReference> keyEntryMap)
   {
     this.keyEntryMap = keyEntryMap;
   }
 
-  protected void handle(CustomHttpExchange exchange) throws Exception
+  protected void handle(HelperServerRequest resquest, HelperServerResponse response, String keyStoreId) throws Exception
   {
     XMLSignatureFactory fac = XMLSignatureFactory.getInstance("DOM");
 
-    String uri = exchange.getParameter("uri");
+    String uri = resquest.getUri();
     SignedInfo si = getSignedInfo(fac, uri);
 
-    String keyStoreId = exchange.getParameter("keystoreid");
     KeyEntryReference keRef = keyEntryMap.get(keyStoreId);
     if (keRef == null)
       throw new NotFoundException("No key entry with id " + keyStoreId +
           " was found (not initialized?)");
     KeyInfo ki = getKeyInfo(fac, keRef.getKeyEntry());
 
-    Document doc = readDocument(exchange.getInputStream());
+    Document doc = readDocument(resquest.getInputStream());
 
     DOMSignContext dsc = new DOMSignContext(
                              keRef.getKeyEntry().getPrivateKey(),
@@ -89,7 +87,7 @@ class SignHandler extends CustomHttpHandler
         throw e;
     }
 
-    writeDocument(doc, exchange.getPrintStream());
+    writeDocument(doc, response);
   }
 
   protected String getAllowedMethod()
@@ -146,13 +144,14 @@ class SignHandler extends CustomHttpHandler
     return dbf.newDocumentBuilder().parse(input);
   }
 
-  private void writeDocument(Document doc, PrintStream output)
+  private void writeDocument(Document doc, HelperServerResponse response)
       throws TransformerConfigurationException, TransformerException
   {
     TransformerFactory tf = TransformerFactory.newInstance();
     tf.newTransformer().transform(
         new DOMSource(doc),
-        new StreamResult(output));
+        new StreamResult(response.getPrintStream()));
+    response.loadDocument();
   }
 }
 

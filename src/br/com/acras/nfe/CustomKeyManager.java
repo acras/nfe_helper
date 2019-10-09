@@ -1,4 +1,4 @@
-package br.com.acras.nfe;
+package nfe;
 
 import java.net.Socket;
 
@@ -10,8 +10,6 @@ import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 
 import javax.net.ssl.X509KeyManager;
-
-import br.com.acras.utils.*;
 
 // Descaradamente copiado de http://objectmix.com/java/76407-a.html
 public class CustomKeyManager implements X509KeyManager
@@ -43,7 +41,7 @@ public class CustomKeyManager implements X509KeyManager
   public X509Certificate[] getCertificateChain(String alias)
   {
     assertAlias(alias);
-    
+
     Certificate[] chain = null;
     try
     {
@@ -53,7 +51,7 @@ public class CustomKeyManager implements X509KeyManager
     {
       throwError(e.getClass().getName() + ": " + e.getMessage());
     }
-    
+
     final X509Certificate[] certChain = new X509Certificate[chain.length];
     for (int i = 0; i < chain.length; i++)
     {
@@ -65,7 +63,7 @@ public class CustomKeyManager implements X509KeyManager
   public PrivateKey getPrivateKey(String alias)
   {
     assertAlias(alias);
-    
+
     return privateKeyEntry.getPrivateKey();
   }
 
@@ -84,7 +82,7 @@ public class CustomKeyManager implements X509KeyManager
     if (!alias.equals(this.alias))
       throwError("Unexpected alias " + alias);
   }
-  
+
   private void throwError(String message)
   {
     throw new CustomKeyManagerRuntimeException(message);
